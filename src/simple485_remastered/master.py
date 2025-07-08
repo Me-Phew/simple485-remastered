@@ -159,6 +159,15 @@ class Master(Node, ABC):
         """
         pass
 
+    def loop(self):
+        """Runs the main loop of the Master node.
+
+        This method is called repeatedly to process incoming messages and manage
+        the state of the active request. It extends the base Node loop to handle
+        request timeouts and retries.
+        """
+        self._loop()
+
     def _loop(self) -> None:
         """Extends the base Node loop to manage active request state."""
         super()._loop()

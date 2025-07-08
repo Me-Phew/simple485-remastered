@@ -57,6 +57,14 @@ class Slave(Node, ABC):
 
         super().__init__(interface=interface, address=address, transmit_mode_pin=transmit_mode_pin, log_level=log_level)
 
+    def loop(self):
+        """Runs the main loop for the Slave node.
+
+        This method is called repeatedly to process incoming messages and
+        handle them according to the Slave's specific implementation.
+        """
+        self._loop()
+
     def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
         """Routes an incoming message to the appropriate handler.
 
