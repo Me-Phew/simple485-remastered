@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "A simple, robust RS485 communication protocol library based on simple485."
 requires-python = ">=3.13"
 dependencies = [
+    "mephew-python-commons",
     "pyserial>=3.5",
 ]
 [project.optional-dependencies]
@@ -11,3 +12,6 @@ test = [
     "pytest",
     "pytest-mock",
 ]
+
+[tool.uv.sources]
+mephew-python-commons = { git = "https://github.com/Me-Phew/mephew-python-commons.git" }

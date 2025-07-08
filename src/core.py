@@ -6,7 +6,7 @@ from typing import Optional, List
 
 import serial
 
-from common.custom_logger import get_custom_logger
+from mephew_python_commons.custom_logger import get_custom_logger
 from .protocol import (
     MAX_MESSAGE_LEN,
     LINE_READY_TIME_MS,

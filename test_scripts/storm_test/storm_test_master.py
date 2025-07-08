@@ -42,7 +42,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from src import Master, Request
 from src import ReceivedMessage
-from common.custom_logger import get_custom_logger
+from mephew_python_commons.custom_logger import get_custom_logger
 
 logger = get_custom_logger(__name__, level=logging.INFO)
 

@@ -6,7 +6,7 @@ from typing import Optional
 import serial
 
 from .core import Simple485Remastered
-from common.custom_logger import get_custom_logger
+from mephew_python_commons.custom_logger import get_custom_logger
 from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
 from .models import ReceivedMessage
 from abc import ABC, abstractmethod
