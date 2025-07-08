@@ -31,7 +31,7 @@ class MockSerial:
     configured with the same `MockSerial` instance, to communicate with each other.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *_args, **_kwargs):
         """Initializes the mock serial port."""
         self._read_buffer = bytearray()
         self._write_buffer = bytearray()  # Kept for potential future use (e.g., separate TX/RX)
