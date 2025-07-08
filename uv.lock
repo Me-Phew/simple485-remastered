@@ -23,7 +23,7 @@ wheels = [
 [[package]]
 name = "mephew-python-commons"
 version = "1.0.0"
-source = { git = "https://github.com/Me-Phew/mephew-python-commons.git#0764a10e645f1fd741fb13647761af46bff4f60c" }
+source = { git = "https://github.com/Me-Phew/mephew-python-commons.git#d65e04ec8cf04cc77b588dd541e576650f88def5" }
 
 [[package]]
 name = "packaging"

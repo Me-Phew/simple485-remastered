@@ -32,9 +32,11 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from src.simple485_remastered import Master, Request
 from src.simple485_remastered import ReceivedMessage
-from mephew_python_commons.custom_logger import get_custom_logger
+from mephew_python_commons.logger_factory import LoggerFactory
 
-logger = get_custom_logger(__name__, level=logging.DEBUG)
+logger_factory = LoggerFactory(log_files_prefix="address_range_test_master")
+
+logger = logger_factory.get_logger(__name__, level=logging.DEBUG)
 
 # --- Test Configuration ---
 FIRST_ADDRESS = 1

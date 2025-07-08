@@ -5,7 +5,6 @@ import time
 from typing import Optional, List
 
 import serial
-from mephew_python_commons.custom_logger import get_custom_logger
 
 from .models import ReceivingMessage, ReceivedMessage
 from .protocol import (
@@ -22,6 +21,7 @@ from .protocol import (
 )
 from .protocol import is_valid_node_address
 from .utils import get_milliseconds
+from .utils import logger_factory
 
 
 class Simple485Remastered:
@@ -71,7 +71,7 @@ class Simple485Remastered:
             ImportError: If a `transmit_mode_pin` is specified but the
                 `RPi.GPIO` library cannot be imported.
         """
-        self._logger: logging.Logger = get_custom_logger(self.__class__.__name__, level=log_level)
+        self._logger: logging.Logger = logger_factory.get_logger(self.__class__.__name__, level=log_level)
 
         self._interface = interface
 

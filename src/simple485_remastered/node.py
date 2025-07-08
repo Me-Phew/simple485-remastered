@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import serial
-from mephew_python_commons.custom_logger import get_custom_logger
 
 from .core import Simple485Remastered
 from .models import ReceivedMessage
 from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
+from .utils import logger_factory
 
 
 class Node(ABC):
@@ -50,7 +50,7 @@ class Node(ABC):
         Raises:
             ValueError: If the provided address is not within the valid range.
         """
-        self._logger = get_custom_logger(self.__class__.__name__, level=log_level)
+        self._logger = logger_factory.get_logger(self.__class__.__name__, level=log_level)
 
         if not is_valid_node_address(address):
             raise ValueError(

@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 
 import serial
-from mephew_python_commons.custom_logger import get_custom_logger
+from mephew_python_commons.logger_factory import LoggerFactory
 
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -37,7 +37,9 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.simple485_remastered import Slave
 from src.simple485_remastered import ReceivedMessage
 
-logger = get_custom_logger(__name__, level=logging.INFO)
+logger_factory = LoggerFactory(log_files_prefix="storm_test_slave")
+
+logger = logger_factory.get_logger(__name__, level=logging.DEBUG)
 
 # --- Test Configuration ---
 FIRST_ADDRESS = 1

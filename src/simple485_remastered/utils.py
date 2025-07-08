@@ -8,6 +8,12 @@ timestamp function, and unit conversion helpers.
 import time
 from enum import Enum
 
+from mephew_python_commons.logger_factory import LoggerFactory
+
+logger_factory = LoggerFactory(
+    log_files_prefix="simple485_remastered",
+)
+
 
 class ByteEnum(bytes, Enum):
     """A custom Enum base class where members are `bytes` objects.

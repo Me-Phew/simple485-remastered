@@ -29,9 +29,11 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.simple485_remastered import ThreadedMaster
 from src.simple485_remastered import Response
 from src.simple485_remastered import RequestException
-from mephew_python_commons.custom_logger import get_custom_logger
+from mephew_python_commons.logger_factory import LoggerFactory
 
-logger = get_custom_logger(__name__, level=logging.DEBUG)
+logger_factory = LoggerFactory(log_files_prefix="threaded_address_range_test_master")
+
+logger = logger_factory.get_logger(__name__, level=logging.DEBUG)
 
 # --- Test Configuration ---
 ITERATIONS = 1
