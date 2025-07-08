@@ -20,13 +20,11 @@ Key Components:
       to get a response after all retry attempts.
 """
 
+from .exceptions import RequestException, MaxRetriesExceededException
 from .master import Master
+from .models import ReceivedMessage, Request, Response
 from .slave import Slave
 from .threaded_master import ThreadedMaster
-
-from .models import ReceivedMessage, Request, Response
-
-from .exceptions import RequestException, MaxRetriesExceededException
 
 __all__ = [
     "Master",

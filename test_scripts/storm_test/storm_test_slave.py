@@ -29,13 +29,13 @@ import time
 from pathlib import Path
 
 import serial
+from mephew_python_commons.custom_logger import get_custom_logger
 
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src import Slave
-from src import ReceivedMessage
-from mephew_python_commons.custom_logger import get_custom_logger
+from src.simple485_remastered import Slave
+from src.simple485_remastered import ReceivedMessage
 
 logger = get_custom_logger(__name__, level=logging.INFO)
 

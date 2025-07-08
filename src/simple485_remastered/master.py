@@ -1,15 +1,15 @@
 """Defines the Master node for initiating communication on the RS485 bus."""
 
 import logging
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import serial
 
+from .models import ReceivedMessage, Request
 from .node import Node
 from .protocol import MASTER_ADDRESS
-from .models import ReceivedMessage, Request
 from .utils import get_milliseconds
-from abc import ABC, abstractmethod
 
 
 class Master(Node, ABC):

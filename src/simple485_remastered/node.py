@@ -1,15 +1,15 @@
 """Provides an abstract base class for all participants on the RS485 bus."""
 
 import logging
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import serial
+from mephew_python_commons.custom_logger import get_custom_logger
 
 from .core import Simple485Remastered
-from mephew_python_commons.custom_logger import get_custom_logger
-from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
 from .models import ReceivedMessage
-from abc import ABC, abstractmethod
+from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
 
 
 class Node(ABC):

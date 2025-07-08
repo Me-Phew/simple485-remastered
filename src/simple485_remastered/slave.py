@@ -1,15 +1,15 @@
 """Defines the abstract base class for a Slave node on the RS485 bus."""
 
 import logging
+from abc import ABC, abstractmethod
 from typing import Optional
 
 import serial
 
+from .models import ReceivedMessage
 from .node import Node
 from .protocol import FIRST_NODE_ADDRESS, MASTER_ADDRESS, LAST_NODE_ADDRESS
 from .protocol import is_valid_slave_address
-from .models import ReceivedMessage
-from abc import ABC, abstractmethod
 
 
 class Slave(Node, ABC):

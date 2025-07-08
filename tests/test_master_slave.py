@@ -15,9 +15,9 @@ from typing import Optional
 
 import pytest
 
-from src import Master, Slave
-from src.models import ReceivedMessage, Request
-from src.utils import get_milliseconds
+from src.simple485_remastered import Master, Slave
+from src.simple485_remastered import ReceivedMessage, Request
+from src.simple485_remastered.utils import get_milliseconds
 
 SLAVE_ADDRESS = 5
 
@@ -130,9 +130,9 @@ def test_max_retries_exceeded(master, mocker):
 
     # Arrange: Mock the time to control when timeouts occur.
     time_now = get_milliseconds()
-    mock_get_ms = mocker.patch("src.models.get_milliseconds")
+    mock_get_ms = mocker.patch("src.simple485_remastered.models.get_milliseconds")
     # Patch the function in `core` as well, as it's used there for timeouts.
-    mocker.patch("src.core.get_milliseconds", new=mock_get_ms)
+    mocker.patch("src.simple485_remastered.core.get_milliseconds", new=mock_get_ms)
     mock_get_ms.return_value = time_now
 
     # 1. Act: Master sends the initial request.

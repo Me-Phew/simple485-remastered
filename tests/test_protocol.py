@@ -7,7 +7,8 @@ edge cases, and invalid cases.
 """
 
 import pytest
-from src.protocol import (
+
+from src.simple485_remastered.protocol import (
     is_valid_node_address,
     is_valid_slave_address,
     MASTER_ADDRESS,

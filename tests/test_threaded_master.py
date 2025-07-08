@@ -13,8 +13,8 @@ import threading
 
 import pytest
 
-from src import ThreadedMaster
-from src.exceptions import MaxRetriesExceededException
+from src.simple485_remastered import MaxRetriesExceededException
+from src.simple485_remastered import ThreadedMaster
 from tests.test_master_slave import EchoSlave, SLAVE_ADDRESS  # Reuse our EchoSlave
 
 

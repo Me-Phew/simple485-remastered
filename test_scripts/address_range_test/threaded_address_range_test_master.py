@@ -26,9 +26,9 @@ import serial
 # Add the project's root directory (`simple485`) to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src import ThreadedMaster
-from src import Response
-from src import RequestException
+from src.simple485_remastered import ThreadedMaster
+from src.simple485_remastered import Response
+from src.simple485_remastered import RequestException
 from mephew_python_commons.custom_logger import get_custom_logger
 
 logger = get_custom_logger(__name__, level=logging.DEBUG)

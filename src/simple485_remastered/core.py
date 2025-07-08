@@ -5,8 +5,9 @@ import time
 from typing import Optional, List
 
 import serial
-
 from mephew_python_commons.custom_logger import get_custom_logger
+
+from .models import ReceivingMessage, ReceivedMessage
 from .protocol import (
     MAX_MESSAGE_LEN,
     LINE_READY_TIME_MS,
@@ -20,7 +21,6 @@ from .protocol import (
     LAST_NODE_ADDRESS,
 )
 from .protocol import is_valid_node_address
-from .models import ReceivingMessage, ReceivedMessage
 from .utils import get_milliseconds
 
 

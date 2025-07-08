@@ -30,8 +30,8 @@ import serial
 # This allows the script to import from the `src` and `common` directories.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src import Master, Request
-from src import ReceivedMessage
+from src.simple485_remastered import Master, Request
+from src.simple485_remastered import ReceivedMessage
 from mephew_python_commons.custom_logger import get_custom_logger
 
 logger = get_custom_logger(__name__, level=logging.DEBUG)
