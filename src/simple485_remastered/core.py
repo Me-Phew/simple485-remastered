@@ -279,9 +279,10 @@ class Simple485Remastered:
                     if byte == ControlSequence.SOH:
                         self._receiver_state = ReceiverState.SOH_RECEIVED
 
+                        self._receiving_message = ReceivingMessage(timestamp=get_milliseconds())
+
                 case ReceiverState.SOH_RECEIVED:
                     # Received SOH, expecting destination address.
-                    self._receiving_message = ReceivingMessage(timestamp=get_milliseconds())
                     self._receiving_message.dst_address = byte[0]
 
                     # Check if the message is for this node or a broadcast.
