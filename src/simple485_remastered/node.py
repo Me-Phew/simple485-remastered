@@ -59,7 +59,9 @@ class Node(ABC):
             )
 
         self._address = address
-        self._bus = Simple485Remastered(interface=interface, address=address, transmit_mode_pin=transmit_mode_pin)
+        self._bus = Simple485Remastered(
+            interface=interface, address=address, transmit_mode_pin=transmit_mode_pin, log_level=log_level
+        )
         self._message_sent_ms: Optional[int] = None
 
         self._logger.info(f"Initialized {self.__class__.__name__} with address {self._address}")
