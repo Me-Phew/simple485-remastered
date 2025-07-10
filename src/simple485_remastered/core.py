@@ -40,9 +40,9 @@ class Simple485Remastered:
         _logger (logging.Logger): A logger for this instance.
         _interface (serial.Serial): The pySerial object for communication.
         _address (int): The unique address of this node on the bus.
-        _receivedMessages (List[ReceivedMessage]): A queue for fully parsed
+        _received_messages (List[ReceivedMessage]): A queue for fully parsed
             incoming messages.
-        _outputMessages (List[bytes]): A queue for packetized messages waiting
+        _output_messages (List[bytes]): A queue for packetized messages waiting
             for transmission.
     """
 
@@ -90,8 +90,8 @@ class Simple485Remastered:
         self._last_bus_activity = get_milliseconds()
         self._receiver_state: ReceiverState = ReceiverState.IDLE
         self._receiving_message: ReceivingMessage | None = None
-        self._receivedMessages: List[ReceivedMessage] = []
-        self._outputMessages: List[bytes] = []
+        self._received_messages: List[ReceivedMessage] = []
+        self._output_messages: List[bytes] = []
 
     def get_last_bus_activity(self) -> int:
         """Returns the timestamp of the last recorded bus activity in milliseconds."""
@@ -182,8 +182,8 @@ class Simple485Remastered:
         Returns:
             bool: True if there are messages to send, False otherwise.
         """
-        self._logger.debug(f"Pending send: {len(self._outputMessages)}")
-        return len(self._outputMessages) > 0
+        self._logger.debug(f"Pending send: {len(self._output_messages)}")
+        return len(self._output_messages) > 0
 
     def send_message(self, dst_address: int, payload: bytes, transaction_id: int = 0) -> bool:
         """Constructs a packet and queues it for transmission.
@@ -241,7 +241,7 @@ class Simple485Remastered:
         text_buffer += ControlSequence.ETX + bytes([crc]) + ControlSequence.EOT + ControlSequence.LF * 2
 
         self._logger.debug(f"Constructed message to queue for {dst_address}: {text_buffer.hex()}")
-        self._outputMessages.append(text_buffer)
+        self._output_messages.append(text_buffer)
         return True
 
     def available(self) -> int:
@@ -250,7 +250,7 @@ class Simple485Remastered:
         Returns:
             int: The number of messages in the input queue.
         """
-        return len(self._receivedMessages)
+        return len(self._received_messages)
 
     def read(self) -> ReceivedMessage:
         """Retrieves the oldest received message from the input queue.
@@ -261,10 +261,10 @@ class Simple485Remastered:
         Raises:
             ValueError: If no messages are available to read.
         """
-        if len(self._receivedMessages) == 0:
+        if len(self._received_messages) == 0:
             raise ValueError("No messages available to read.")
 
-        return self._receivedMessages.pop(0)
+        return self._received_messages.pop(0)
 
     def _receive(self) -> None:
         """Processes all available bytes from the serial buffer via a state machine."""
@@ -387,7 +387,7 @@ class Simple485Remastered:
                             payload=self._receiving_message.payload_buffer,
                             _originating_bus=self,
                         )
-                        self._receivedMessages.append(message)
+                        self._received_messages.append(message)
                         self._logger.debug(f"Successfully received message: {message}")
                     else:
                         self._logger.debug("Expected EOT. Dropping packet.")
@@ -405,7 +405,7 @@ class Simple485Remastered:
         Returns:
             bool: True if a message was sent, False otherwise.
         """
-        if not self._outputMessages:
+        if not self._output_messages:
             return False
 
         # Basic collision avoidance: wait for the line to be clear.
@@ -413,7 +413,7 @@ class Simple485Remastered:
             self._logger.debug("Line not ready for transmission, waiting.")
             return False
 
-        message_to_send = self._outputMessages[0]
+        message_to_send = self._output_messages[0]
         self._logger.debug(f"Attempting to transmit message: {message_to_send.hex()}")
 
         try:
@@ -432,6 +432,6 @@ class Simple485Remastered:
             self._disable_transmit_mode()
 
         self._last_bus_activity = get_milliseconds()
-        self._outputMessages.pop(0)
+        self._output_messages.pop(0)
         self._logger.debug("Message sent successfully.")
         return True
