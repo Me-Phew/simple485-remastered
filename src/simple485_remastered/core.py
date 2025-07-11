@@ -271,7 +271,9 @@ class Simple485Remastered:
         while self._interface.in_waiting > 0:
             self._last_bus_activity = get_milliseconds()
             byte = self._interface.read(1)
-            self._logger.debug(f"Received byte: {byte.hex()} in state {self._receiver_state.name}")
+
+            if byte != ControlSequence.NULL or self._receiver_state != ReceiverState.IDLE:
+                self._logger.debug(f"Received byte: {byte.hex()} in state {self._receiver_state.name}")
 
             match self._receiver_state:
                 case ReceiverState.IDLE:
