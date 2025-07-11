@@ -36,7 +36,6 @@ DEFAULT_RESPONSE_TIMEOUT_MS = 2000
 #: Default number of times a Master will retry a failed request.
 DEFAULT_MAX_RETRIES = 3
 
-
 # -- Address Configuration --
 
 #: The first valid address for any node on the bus.
