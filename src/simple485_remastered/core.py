@@ -269,11 +269,17 @@ class Simple485Remastered:
     def _receive(self) -> None:
         """Processes all available bytes from the serial buffer via a state machine."""
         while self._interface.in_waiting > 0:
-            self._last_bus_activity = get_milliseconds()
             byte = self._interface.read(1)
 
-            if byte != ControlSequence.NULL or self._receiver_state != ReceiverState.IDLE:
-                self._logger.debug(f"Received byte: {byte.hex()} in state {self._receiver_state.name}")
+            if byte == ControlSequence.NULL and self._receiver_state == ReceiverState.IDLE:
+                # Some receivers may send NULL bytes when the bus is idle.
+                # Because of that we assume the bus is clear when we receive a NULL byte in the IDLE state.
+                # We can ignore it and wait for the next byte.
+                # * Note: Omitting this would set constantly reset self._last_bus_activity preventing transmission.
+                continue
+
+            self._last_bus_activity = get_milliseconds()
+            self._logger.debug(f"Received byte: {byte.hex()} in state {self._receiver_state.name}")
 
             match self._receiver_state:
                 case ReceiverState.IDLE:
