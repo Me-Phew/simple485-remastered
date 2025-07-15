@@ -9,7 +9,7 @@ import serial
 from .core import Simple485Remastered
 from .models import ReceivedMessage
 from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
-from .utils import logger_factory
+from .utils import logger_factory, get_milliseconds
 
 
 class Node(ABC):
@@ -152,7 +152,12 @@ class Node(ABC):
         try:
             status = self._bus.send_message(destination_address, payload, transaction_id)
             if status:
-                self._message_sent_ms = self._bus.get_last_bus_activity()
+                # We can't use `self._bus.get_last_bus_activity()` here as at this point
+                # it is highly unlikely the bus has actually transmitted the message.
+                # * Due to the above, this is actually the time the message was enqueued.
+                # * This causes the RTT to also include this time, which is what we want so that
+                # * bus congestion can be more easily detected.
+                self._message_sent_ms = get_milliseconds()
             return status
         except Exception as e:
             self._logger.error(f"Unexpected error sending message: {e}")
