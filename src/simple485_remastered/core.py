@@ -18,6 +18,7 @@ from .protocol import (
     SEND_TIME_S,
     FIRST_NODE_ADDRESS,
     LAST_NODE_ADDRESS,
+    BITS_PER_BYTE,
 )
 from .protocol import is_valid_node_address
 from .utils import get_milliseconds
@@ -428,8 +429,31 @@ class Simple485Remastered:
         try:
             self._enable_transmit_mode()
             self._interface.write(message_to_send)
-            self._interface.flush()
-            time.sleep(SEND_TIME_S)  # Ensure the entire message is sent before disabling TX
+
+            # Start with a standard safety margin for the sleep duration to account for OS/hardware latency.
+            safety_margin_factor = 1.1
+
+            # --- Two-Stage Wait for Transmission Completion ---
+            # Stage 1: Ensure the OS buffer is empty by calling flush().
+            # This makes the subsequent sleep timing much more reliable, as it starts
+            # after the OS has handed all data to the hardware UART.
+            try:
+                self._interface.flush()
+            except AttributeError:
+                # If flush() isn't available (e.g., on certain pyserial backends),
+                # we can't be sure when the OS has finished its part.
+                # We increase the safety margin to compensate for this uncertainty.
+                safety_margin_factor = 1.2
+
+            # Stage 2: Calculate and wait for the time required for the physical
+            # hardware (UART) to send all bits of the message over the wire.
+            transmission_time_s = (
+                (len(message_to_send) * BITS_PER_BYTE) / self._interface.baudrate * safety_margin_factor
+            )
+
+            self._logger.debug(f"Message transmission time: {transmission_time_s:.2f} seconds")
+
+            time.sleep(transmission_time_s)
         except serial.SerialException as e:
             self._logger.error(f"Serial communication error: {e}. Message not sent. Will retry later.")
             return False
@@ -440,6 +464,7 @@ class Simple485Remastered:
             # Crucially, always return to receive mode.
             self._disable_transmit_mode()
 
+        # If we reach here, transmission was successful.
         self._last_bus_activity = get_milliseconds()
         self._output_messages.pop(0)
         self._logger.debug("Message sent successfully.")

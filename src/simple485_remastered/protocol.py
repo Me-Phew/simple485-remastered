@@ -22,9 +22,11 @@ LINE_READY_TIME_MS = 10
 #: Time (s) to wait for the RS485 transceiver to switch between modes.
 TRANSCEIVER_TOGGLE_TIME_S = microseconds_to_seconds(100)
 
-#: A short delay (s) to ensure the last byte has been physically transmitted
-#: over the wire before disabling the transceiver's transmit mode.
-SEND_TIME_S = microseconds_to_seconds(100)
+#: The total number of bits sent on the wire for each byte of data.
+#: For standard asynchronous serial (UART) with 8N1 configuration, this is:
+#: 1 start bit + 8 data bits + 1 stop bit = 10 bits.
+#: This constant is crucial for calculating accurate transmission times.
+BITS_PER_BYTE = 10
 
 #: The maximum time (ms) allowed between bytes of an incoming packet.
 #: If this time is exceeded, the receiver resets and discards the packet.
