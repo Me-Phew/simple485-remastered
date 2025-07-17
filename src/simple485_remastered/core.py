@@ -15,7 +15,6 @@ from .protocol import (
     ReceiverState,
     ControlSequence,
     TRANSCEIVER_TOGGLE_TIME_S,
-    SEND_TIME_S,
     FIRST_NODE_ADDRESS,
     LAST_NODE_ADDRESS,
     BITS_PER_BYTE,
