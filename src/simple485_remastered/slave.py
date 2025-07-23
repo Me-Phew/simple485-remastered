@@ -80,7 +80,7 @@ class Slave(Node, ABC):
         if message.src_address != MASTER_ADDRESS:
             self._logger.warning(
                 f"Received message from non-master address {message.src_address}. "
-                f"Slave only accepts messages from Master ({MASTER_ADDRESS})."
+                f"Slave only accepts messages from the master ({MASTER_ADDRESS})."
             )
             return None
 

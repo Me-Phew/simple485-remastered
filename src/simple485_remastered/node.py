@@ -64,7 +64,7 @@ class Node(ABC):
         )
         self._message_sent_ms: Optional[int] = None
 
-        self._logger.info(f"Initialized {self.__class__.__name__} with address {self._address}")
+        self._logger.debug(f"Initialized {self.__class__.__name__} with address {self._address}")
 
     def _get_address(self) -> int:
         """Returns the configured address of the node."""
@@ -103,7 +103,7 @@ class Node(ABC):
         while self._bus.available() > 0:
             try:
                 message = self._bus.read()
-                self._logger.debug(f"Node received: {message}")
+                self._logger.info(f"Received a message: {message}")
 
                 elapsed_ms = (
                     (self._bus.get_last_bus_activity() - self._message_sent_ms) if self._message_sent_ms else None
@@ -148,7 +148,7 @@ class Node(ABC):
         if not is_valid_node_address(destination_address):
             raise ValueError(f"Destination address {destination_address} is out of valid range.")
 
-        self._logger.debug(f"Node attempting to send message to {destination_address}: '{payload.hex()}'")
+        self._logger.info(f"Attempting to send message to {destination_address}: '{payload.hex()}'")
         try:
             status = self._bus.send_message(destination_address, payload, transaction_id)
             if status:
@@ -173,7 +173,7 @@ class Node(ABC):
         Returns:
             bool: True if the message was successfully queued for sending.
         """
-        self._logger.debug(f"Node attempting to broadcast message: '{payload.hex()}'")
+        self._logger.info(f"Attempting to send a broadcast message: '{payload.hex()}'")
         try:
             return self._bus.send_message(BROADCAST_ADDRESS, payload, transaction_id)
         except Exception as e:

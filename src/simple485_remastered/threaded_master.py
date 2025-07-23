@@ -80,7 +80,7 @@ class ThreadedMaster(Master):
         This method should be the target of a `threading.Thread`. It runs an
         infinite loop that continuously processes the bus I/O.
         """
-        self._logger.info("Starting background communication loop...")
+        self._logger.info("Starting background communication loop")
         while True:
             self._loop()
             time.sleep(0.0001)  # Prevent busy-waiting
@@ -96,7 +96,7 @@ class ThreadedMaster(Master):
             message (ReceivedMessage): The response message from the slave
             elapsed_ms (Optional[int]): The round-trip time for the request
         """
-        self._logger.debug(f"Response received, setting event. Payload: {message.payload.hex()}")
+        self._logger.info(f"Response received. Payload: {message.payload.hex()}")
         self._response_message = message
         self._elapsed_ms = elapsed_ms
         self._number_of_retries = request.retry_count
@@ -112,7 +112,7 @@ class ThreadedMaster(Master):
         Args:
             request (Request): The request that has ultimately failed.
         """
-        self._logger.warning("Request timed out after all retries, setting event.")
+        self._logger.warning("Request timed out after all retries.")
         self._response_message = None
         self._elapsed_ms = None
         self._number_of_retries = request.retry_count

@@ -93,6 +93,8 @@ class Simple485Remastered:
         self._received_messages: List[ReceivedMessage] = []
         self._output_messages: List[bytes] = []
 
+        self._logger.debug(f"Initialized {self.__class__.__name__} with address {self._address}")
+
     def get_last_bus_activity(self) -> int:
         """Returns the timestamp of the last recorded bus activity in milliseconds."""
         return self._last_bus_activity
@@ -116,7 +118,7 @@ class Simple485Remastered:
                 f"Node's address must be an integer between {FIRST_NODE_ADDRESS} and {LAST_NODE_ADDRESS} inclusive."
             )
 
-        self._logger.debug(f"Changing address from {self._address} to {address}")
+        self._logger.info(f"Changing address from {self._address} to {address}")
         self._address = address
 
     def _enable_transmit_mode(self) -> None:
@@ -240,7 +242,7 @@ class Simple485Remastered:
         # Append the packet footer
         text_buffer += ControlSequence.ETX + bytes([crc]) + ControlSequence.EOT + ControlSequence.LF * 2
 
-        self._logger.debug(f"Constructed message to queue for {dst_address}: {text_buffer.hex()}")
+        self._logger.debug(f"Queuing message, buffer: {text_buffer.hex()}, dest_address: {dst_address}")
         self._output_messages.append(text_buffer)
         return True
 
@@ -298,7 +300,7 @@ class Simple485Remastered:
                         self._receiving_message.dst_address != self._address
                         and self._receiving_message.dst_address != BROADCAST_ADDRESS
                     ):
-                        self._logger.debug("Received message for another address. Ignoring.")
+                        self._logger.info("Received message for another address. Ignoring.")
                         self._receiver_state = ReceiverState.IDLE
                         self._receiving_message = None
                     else:
@@ -318,7 +320,9 @@ class Simple485Remastered:
                     # Expecting message length.
                     self._receiving_message.length = byte[0]
                     if not (0 < self._receiving_message.length <= MAX_MESSAGE_LEN):
-                        self._logger.error(f"Received invalid message length: {self._receiving_message.length}")
+                        self._logger.warning(
+                            f"Received invalid message length of: {self._receiving_message.length}. Dropping."
+                        )
                         self._receiver_state = ReceiverState.IDLE
                         self._receiving_message = None
                     else:
@@ -335,7 +339,7 @@ class Simple485Remastered:
                         )
                         self._receiver_state = ReceiverState.STX_RECEIVED
                     else:
-                        self._logger.error("Expected STX, but got other data. Dropping packet.")
+                        self._logger.warning("Expected STX, but got other data. Dropping.")
                         self._receiver_state = ReceiverState.IDLE
                         self._receiving_message = None
 
@@ -365,13 +369,13 @@ class Simple485Remastered:
                         if len(self._receiving_message.payload_buffer) == self._receiving_message.length:
                             self._receiver_state = ReceiverState.ETX_RECEIVED
                         else:
-                            self._logger.debug("ETX received but payload length is incorrect. Dropping.")
+                            self._logger.warning("ETX received but payload length is incorrect. Dropping.")
                             self._receiver_state = ReceiverState.IDLE
                             self._receiving_message = None
                         continue
 
                     # If we get here, the byte is invalid.
-                    self._logger.debug("Invalid data byte. Dropping packet.")
+                    self._logger.warning("Invalid data byte. Dropping.")
                     self._receiver_state = ReceiverState.IDLE
                     self._receiving_message = None
 
@@ -380,7 +384,7 @@ class Simple485Remastered:
                     if byte[0] == self._receiving_message.crc:
                         self._receiver_state = ReceiverState.CRC_OK
                     else:
-                        self._logger.debug("Invalid CRC. Dropping packet.")
+                        self._logger.warning("CRC mismatch. Dropping.")
                         self._receiver_state = ReceiverState.IDLE
                         self._receiving_message = None
 
@@ -397,9 +401,9 @@ class Simple485Remastered:
                             _originating_bus=self,
                         )
                         self._received_messages.append(message)
-                        self._logger.debug(f"Successfully received message: {message}")
+                        self._logger.info(f"Successfully received message: {message}")
                     else:
-                        self._logger.debug("Expected EOT. Dropping packet.")
+                        self._logger.warning("Expected EOT. Dropping packet.")
 
                     # Reset for the next message.
                     self._receiver_state = ReceiverState.IDLE
@@ -423,7 +427,7 @@ class Simple485Remastered:
             return False
 
         message_to_send = self._output_messages[0]
-        self._logger.debug(f"Attempting to transmit message: {message_to_send.hex()}")
+        self._logger.debug(f"Attempting to transmit a message, buffer: {message_to_send.hex()}")
 
         try:
             self._enable_transmit_mode()
@@ -466,5 +470,5 @@ class Simple485Remastered:
         # If we reach here, transmission was successful.
         self._last_bus_activity = get_milliseconds()
         self._output_messages.pop(0)
-        self._logger.debug("Message sent successfully.")
+        self._logger.info("Message sent successfully, buffer: %s", message_to_send.hex())
         return True

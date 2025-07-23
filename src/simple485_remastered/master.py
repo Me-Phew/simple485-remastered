@@ -121,7 +121,7 @@ class Master(Node, ABC):
             )
             return
 
-        self._logger.debug(f"Received valid response from {self._active_request.dst_address}.")
+        self._logger.info(f"Received valid response from {self._active_request.dst_address}.")
         active_request_temp = self._active_request
         self._active_request = None  # Clear the active request
         self._handle_response(active_request_temp, message, elapsed_ms)
