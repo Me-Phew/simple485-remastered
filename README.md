@@ -31,8 +31,6 @@ Full credit goes to the original author for the protocol design and initial impl
 
 ## Installation
 
-## Installation
-
 This project uses `uv` for fast, modern package management.
 
 1.  **Clone the repository:**
