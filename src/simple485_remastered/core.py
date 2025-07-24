@@ -379,7 +379,7 @@ class Simple485Remastered:
             case ReceiverState.CRC_OK:
                 # Expecting End of Transmission (EOT).
                 if byte == ControlSequence.EOT:
-                    # Message is complete and valid. Create a ReceivedMessage object.
+                    # The Message is complete and valid. Create a ReceivedMessage object.
                     message = ReceivedMessage(
                         src_address=self._receiving_message.src_address,
                         dest_address=self._receiving_message.dst_address,
