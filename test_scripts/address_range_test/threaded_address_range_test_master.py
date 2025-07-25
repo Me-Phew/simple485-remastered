@@ -29,7 +29,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.simple485_remastered import ThreadedMaster
 from src.simple485_remastered import Response
 from src.simple485_remastered import RequestException
-from mephew_python_commons.logger_factory import LoggerFactory
+from mephew_python_commons import LoggerFactory
 
 logger_factory = LoggerFactory(log_files_prefix="threaded_address_range_test_master")
 

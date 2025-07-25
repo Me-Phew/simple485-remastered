@@ -8,7 +8,7 @@ timestamp function, and unit conversion helpers.
 import time
 from enum import Enum
 
-from mephew_python_commons.logger_factory import LoggerFactory
+from mephew_python_commons import LoggerFactory
 
 logger_factory = LoggerFactory(
     log_files_prefix="simple485_remastered",

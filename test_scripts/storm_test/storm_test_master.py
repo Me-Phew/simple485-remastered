@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Optional
 
 import serial
-from mephew_python_commons.logger_factory import LoggerFactory
+from mephew_python_commons import LoggerFactory
 
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))

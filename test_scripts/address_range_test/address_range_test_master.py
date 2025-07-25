@@ -32,7 +32,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from src.simple485_remastered import Master, Request
 from src.simple485_remastered import ReceivedMessage
-from mephew_python_commons.logger_factory import LoggerFactory
+from mephew_python_commons import LoggerFactory
 
 logger_factory = LoggerFactory(log_files_prefix="address_range_test_master")
 
