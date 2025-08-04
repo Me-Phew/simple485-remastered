@@ -6,7 +6,7 @@ from typing import Optional
 
 import serial
 
-from .core import Simple485Remastered
+from .core import Simple485Remastered, DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .models import ReceivedMessage
 from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
 from .utils import logger_factory, get_milliseconds
@@ -33,6 +33,7 @@ class Node(ABC):
         self,
         *,
         interface: serial.Serial,
+        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         address: int,
         transmit_mode_pin: Optional[int] = None,
         log_level: int = logging.INFO,
@@ -42,6 +43,8 @@ class Node(ABC):
         Args:
             interface (serial.Serial): A pre-configured and open pySerial
                 interface object
+            transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
+                the RS485 transceiver to switch between transmit and receive modes.
             address (int): The unique address for this node
             transmit_mode_pin (Optional[int]): The BCM GPIO pin number used for
                 transceiver direction control
@@ -60,7 +63,11 @@ class Node(ABC):
 
         self._address = address
         self._bus = Simple485Remastered(
-            interface=interface, address=address, transmit_mode_pin=transmit_mode_pin, log_level=log_level
+            interface=interface,
+            address=address,
+            transceiver_toggle_time_s=transceiver_toggle_time_s,
+            transmit_mode_pin=transmit_mode_pin,
+            log_level=log_level,
         )
         self._message_sent_ms: Optional[int] = None
 

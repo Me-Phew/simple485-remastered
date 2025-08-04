@@ -6,6 +6,7 @@ from typing import Optional
 
 import serial
 
+from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .models import ReceivedMessage, Request
 from .node import Node
 from .protocol import MASTER_ADDRESS
@@ -36,6 +37,7 @@ class Master(Node, ABC):
         self,
         *,
         interface: serial.Serial,
+        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
         request_timeout_ms: int = 1000,
         max_request_retries: int = 3,
@@ -46,6 +48,8 @@ class Master(Node, ABC):
         Args:
             interface (serial.Serial): A pre-configured and open pySerial
                 interface object
+            transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
+                the RS485 transceiver to switch between transmit and receive modes.
             transmit_mode_pin (Optional[int]): The BCM GPIO pin number used for
                 transceiver direction control
             request_timeout_ms (int): The default time in milliseconds to wait
@@ -55,7 +59,11 @@ class Master(Node, ABC):
             log_level (int): The logging level for this instance
         """
         super().__init__(
-            interface=interface, address=MASTER_ADDRESS, transmit_mode_pin=transmit_mode_pin, log_level=log_level
+            interface=interface,
+            address=MASTER_ADDRESS,
+            transceiver_toggle_time_s=transceiver_toggle_time_s,
+            transmit_mode_pin=transmit_mode_pin,
+            log_level=log_level,
         )
 
         self._request_timeout_ms = request_timeout_ms

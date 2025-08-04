@@ -42,6 +42,8 @@ class Simple485Remastered:
         _logger (logging.Logger): A logger for this instance.
         _interface (serial.Serial): The pySerial object for communication.
         _address (int): The unique address of this node on the bus.
+        _transceiver_toggle_time_s (Optional[float]): Time in seconds to wait for the
+            RS485 transceiver to switch between transmit and receive modes.
         _received_messages (List[ReceivedMessage]): A queue for fully parsed
             incoming messages.
         _output_messages (List[bytes]): A queue for packetized messages waiting
@@ -53,7 +55,7 @@ class Simple485Remastered:
         *,
         interface: serial.Serial,
         address: int,
-        transceiver_toggle_time_s: float = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
         log_level: int = logging.INFO,
     ):
@@ -64,6 +66,8 @@ class Simple485Remastered:
                 interface object
             address (int): The unique address for this node, which must be
                 between FIRST_NODE_ADDRESS and LAST_NODE_ADDRESS
+            transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
+                the RS485 transceiver to switch between transmit and receive modes.
             transmit_mode_pin (Optional[int]): The BCM GPIO pin number used to
                 control the transmit enable on an RS485 transceiver. If None,
                 the library assumes automatic direction control

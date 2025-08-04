@@ -6,6 +6,7 @@ from typing import Optional
 
 import serial
 
+from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .models import ReceivedMessage
 from .node import Node
 from .protocol import FIRST_NODE_ADDRESS, MASTER_ADDRESS, LAST_NODE_ADDRESS
@@ -30,6 +31,7 @@ class Slave(Node, ABC):
         self,
         *,
         interface: serial.Serial,
+        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         address: int,
         transmit_mode_pin: Optional[int] = None,
         log_level: int = logging.INFO,
@@ -39,6 +41,8 @@ class Slave(Node, ABC):
         Args:
             interface (serial.Serial): A pre-configured and open pySerial
                 interface object
+            transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
+                the RS485 transceiver to switch between transmit and receive modes.
             address (int): The unique address for this Slave node, which cannot
                 be the MASTER_ADDRESS
             transmit_mode_pin (Optional[int]): The BCM GPIO pin number used for
@@ -55,7 +59,13 @@ class Slave(Node, ABC):
                 f"Address must be between {FIRST_NODE_ADDRESS + 1} and {LAST_NODE_ADDRESS}."
             )
 
-        super().__init__(interface=interface, address=address, transmit_mode_pin=transmit_mode_pin, log_level=log_level)
+        super().__init__(
+            interface=interface,
+            address=address,
+            transceiver_toggle_time_s=transceiver_toggle_time_s,
+            transmit_mode_pin=transmit_mode_pin,
+            log_level=log_level,
+        )
 
     def loop(self):
         """Runs the main loop for the Slave node.
