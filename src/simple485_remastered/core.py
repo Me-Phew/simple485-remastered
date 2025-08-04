@@ -14,14 +14,16 @@ from .protocol import (
     BROADCAST_ADDRESS,
     ReceiverState,
     ControlSequence,
-    TRANSCEIVER_TOGGLE_TIME_S,
     FIRST_NODE_ADDRESS,
     LAST_NODE_ADDRESS,
     BITS_PER_BYTE,
 )
 from .protocol import is_valid_node_address
-from .utils import get_milliseconds
+from .utils import get_milliseconds, microseconds_to_seconds
 from .utils import logger_factory
+
+#: Default time (s) to wait for the RS485 transceiver to switch between modes.
+DEFAULT_TRANSCEIVER_TOGGLE_TIME_S = microseconds_to_seconds(100)
 
 
 class Simple485Remastered:
@@ -51,6 +53,7 @@ class Simple485Remastered:
         *,
         interface: serial.Serial,
         address: int,
+        transceiver_toggle_time_s: float = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
         log_level: int = logging.INFO,
     ):
@@ -82,6 +85,13 @@ class Simple485Remastered:
             )
 
         self._address = address
+
+        self._transceiver_toggle_time_s = transceiver_toggle_time_s
+        if self._transceiver_toggle_time_s <= 0:
+            raise ValueError(
+                f"Invalid transceiver toggle time: {self._transceiver_toggle_time_s}. "
+                "It must be a positive float representing seconds."
+            )
 
         self._gpio = None
         self._transmit_mode_pin = transmit_mode_pin
@@ -128,7 +138,7 @@ class Simple485Remastered:
 
         self._gpio.output(self._transmit_mode_pin, True)
         # Allow time for the transceiver to switch state
-        time.sleep(TRANSCEIVER_TOGGLE_TIME_S)
+        time.sleep(self._transceiver_toggle_time_s)
 
     def _disable_transmit_mode(self) -> None:
         """Deactivates transmit mode, returning the transceiver to receive mode."""
@@ -137,7 +147,7 @@ class Simple485Remastered:
 
         self._gpio.output(self._transmit_mode_pin, False)
         # Allow time for the transceiver to switch state
-        time.sleep(TRANSCEIVER_TOGGLE_TIME_S)
+        time.sleep(self._transceiver_toggle_time_s)
 
     def _init_transmit_mode_pin(self) -> None:
         """Initializes the GPIO pin for transceiver control if one is specified."""

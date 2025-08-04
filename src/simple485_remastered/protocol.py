@@ -8,7 +8,7 @@ reference for understanding the low-level mechanics of the data exchange.
 
 from enum import IntEnum
 
-from .utils import ByteEnum, microseconds_to_seconds
+from .utils import ByteEnum
 
 # -- Message and Timing Configuration --
 
@@ -18,9 +18,6 @@ MAX_MESSAGE_LEN = 255
 #: The minimum time (ms) the bus must be idle before a node can start transmitting.
 #: Used for basic collision avoidance.
 LINE_READY_TIME_MS = 10
-
-#: Time (s) to wait for the RS485 transceiver to switch between modes.
-TRANSCEIVER_TOGGLE_TIME_S = microseconds_to_seconds(100)
 
 #: The total number of bits sent on the wire for each byte of data.
 #: For standard asynchronous serial (UART) with 8N1 configuration, this is:
