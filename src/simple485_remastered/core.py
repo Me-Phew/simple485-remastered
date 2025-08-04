@@ -470,8 +470,8 @@ class Simple485Remastered:
             # Stage 2: Calculate and wait for the time required for the physical
             # hardware (UART) to send all bits of the message over the wire.
             transmission_time_s = (
-                (len(message_to_send) * BITS_PER_BYTE) / self._interface.baudrate * safety_margin_factor
-            )
+                (len(message_to_send) * BITS_PER_BYTE) / self._interface.baudrate
+            ) * safety_margin_factor
 
             self._logger.debug(f"Message transmission time: {transmission_time_s:.2f} seconds")
 
