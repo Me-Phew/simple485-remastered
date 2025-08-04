@@ -37,6 +37,7 @@ class MockSerial:
         self._write_buffer = bytearray()  # Kept for potential future use (e.g., separate TX/RX)
         self.is_open = True
         self.in_waiting = 0
+        self.baudrate = 9600
 
     def write(self, data: bytes) -> int:
         """Simulates writing data to the serial port.
