@@ -40,6 +40,8 @@ class ThreadedMaster(Master):
         interface: serial.Serial,
         transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
+        use_rts_for_transmit_mode: bool = False,
+        tx_active_high: bool = True,
         request_timeout_ms: int = 1000,
         max_request_retries: int = 3,
         raise_on_response_error: bool = True,
@@ -51,7 +53,12 @@ class ThreadedMaster(Master):
             interface (serial.Serial): A pre-configured pySerial interface
             transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
                 the RS485 transceiver to switch between transmit and receive modes.
-            transmit_mode_pin (Optional[int]): The GPIO pin for TX/RX control
+            transmit_mode_pin (Optional[int]): The BCM GPIO pin number used to
+                control the transmit enable on an RS485 transceiver.
+            use_rts_for_transmit_mode (bool): If True, uses the RTS line for
+                controlling the RS485 transceiver.
+            tx_active_high (bool): If True, the transmit mode is active when
+                the transmit mode pin or RTS line is high. Otherwise, it is active low.
             request_timeout_ms (int): Default time to wait for a response
             max_request_retries (int): Default number of retries for a request
             raise_on_response_error (bool): If True, a `MaxRetriesExceededException`
@@ -63,6 +70,8 @@ class ThreadedMaster(Master):
             interface=interface,
             transceiver_toggle_time_s=transceiver_toggle_time_s,
             transmit_mode_pin=transmit_mode_pin,
+            use_rts_for_transmit_mode=use_rts_for_transmit_mode,
+            tx_active_high=tx_active_high,
             request_timeout_ms=request_timeout_ms,
             max_request_retries=max_request_retries,
             log_level=log_level,

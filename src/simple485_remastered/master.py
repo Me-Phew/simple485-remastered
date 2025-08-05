@@ -39,6 +39,8 @@ class Master(Node, ABC):
         interface: serial.Serial,
         transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
+        use_rts_for_transmit_mode: bool = False,
+        tx_active_high: bool = True,
         request_timeout_ms: int = 1000,
         max_request_retries: int = 3,
         log_level: int = logging.INFO,
@@ -50,8 +52,12 @@ class Master(Node, ABC):
                 interface object
             transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
                 the RS485 transceiver to switch between transmit and receive modes.
-            transmit_mode_pin (Optional[int]): The BCM GPIO pin number used for
-                transceiver direction control
+            transmit_mode_pin (Optional[int]): The BCM GPIO pin number used to
+                control the transmit enable on an RS485 transceiver.
+            use_rts_for_transmit_mode (bool): If True, uses the RTS line for
+                controlling the RS485 transceiver.
+            tx_active_high (bool): If True, the transmit mode is active when
+                the transmit mode pin or RTS line is high. Otherwise, it is active low.
             request_timeout_ms (int): The default time in milliseconds to wait
                 for a response before considering a request timed out
             max_request_retries (int): The default number of times to retry a
@@ -63,6 +69,8 @@ class Master(Node, ABC):
             address=MASTER_ADDRESS,
             transceiver_toggle_time_s=transceiver_toggle_time_s,
             transmit_mode_pin=transmit_mode_pin,
+            use_rts_for_transmit_mode=use_rts_for_transmit_mode,
+            tx_active_high=tx_active_high,
             log_level=log_level,
         )
 

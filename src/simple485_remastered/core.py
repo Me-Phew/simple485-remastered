@@ -57,6 +57,8 @@ class Simple485Remastered:
         address: int,
         transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         transmit_mode_pin: Optional[int] = None,
+        use_rts_for_transmit_mode: bool = False,
+        tx_active_high: bool = True,
         log_level: int = logging.INFO,
     ):
         """Initializes the Simple485 node.
@@ -69,12 +71,16 @@ class Simple485Remastered:
             transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
                 the RS485 transceiver to switch between transmit and receive modes.
             transmit_mode_pin (Optional[int]): The BCM GPIO pin number used to
-                control the transmit enable on an RS485 transceiver. If None,
-                the library assumes automatic direction control
+                control the transmit enable on an RS485 transceiver.
+            use_rts_for_transmit_mode (bool): If True, uses the RTS line for
+                controlling the RS485 transceiver.
+            tx_active_high (bool): If True, the transmit mode is active when
+                the transmit mode pin or RTS line is high. Otherwise, it is active low.
             log_level (int): The logging level for this instance
 
         Raises:
             ValueError: If the provided address is not within the valid range.
+            ValueError: If `transmit_mode_pin` and `use_rts_for_transmit_mode` are used at the same time.
             ImportError: If a `transmit_mode_pin` is specified but the
                 `RPi.GPIO` library cannot be imported.
         """
@@ -97,9 +103,18 @@ class Simple485Remastered:
                 "It must be a positive float representing seconds."
             )
 
-        self._gpio = None
+        if transmit_mode_pin is not None and use_rts_for_transmit_mode:
+            raise ValueError(
+                "Cannot specify both 'transmit_mode_pin' and 'use_rts_for_transmit_mode'. "
+                "Choose one method for transceiver control."
+            )
+
         self._transmit_mode_pin = transmit_mode_pin
-        self._init_transmit_mode_pin()
+        self._use_rts_for_transmit_mode = use_rts_for_transmit_mode
+        self._tx_active_high = tx_active_high
+
+        self._gpio = None
+        self._init_transceiver_control()
 
         self._last_bus_activity = get_milliseconds()
         self._receiver_state: ReceiverState = ReceiverState.IDLE
@@ -137,38 +152,54 @@ class Simple485Remastered:
 
     def _enable_transmit_mode(self) -> None:
         """Activates the transmit mode on the RS485 transceiver via GPIO."""
-        if not self._transmit_mode_pin:
+        needs_manual_toggle = self._transmit_mode_pin is not None or self._use_rts_for_transmit_mode
+        if not needs_manual_toggle:
             return
 
-        self._gpio.output(self._transmit_mode_pin, True)
+        if self._use_rts_for_transmit_mode:
+            self._interface.rts = self._tx_active_high
+        else:
+            self._gpio.output(self._transmit_mode_pin, self._tx_active_high)
+
         # Allow time for the transceiver to switch state
         time.sleep(self._transceiver_toggle_time_s)
 
     def _disable_transmit_mode(self) -> None:
         """Deactivates transmit mode, returning the transceiver to receive mode."""
-        if not self._transmit_mode_pin:
+        needs_manual_toggle = self._transmit_mode_pin is not None or self._use_rts_for_transmit_mode
+        if not needs_manual_toggle:
             return
 
-        self._gpio.output(self._transmit_mode_pin, False)
+        if self._use_rts_for_transmit_mode:
+            self._interface.rts = not self._tx_active_high
+        else:
+            self._gpio.output(self._transmit_mode_pin, not self._tx_active_high)
+
         # Allow time for the transceiver to switch state
         time.sleep(self._transceiver_toggle_time_s)
 
-    def _init_transmit_mode_pin(self) -> None:
-        """Initializes the GPIO pin for transceiver control if one is specified."""
-        if self._transmit_mode_pin:
+    def _init_transceiver_control(self) -> None:
+        """Initializes the configured transceiver control method (GPIO or RTS)."""
+        if self._transmit_mode_pin is not None:
+            self._logger.debug(f"Using GPIO pin {self._transmit_mode_pin} for transceiver control.")
             try:
                 import RPi.GPIO as GPIO
 
                 self._gpio = GPIO
             except (ImportError, RuntimeError):
                 self._logger.error(
-                    "Enable pin configured but RPi.GPIO not available. " "Ensure you are running on a Raspberry Pi."
+                    "Enable pin configured but RPi.GPIO not available. "
+                    "Ensure you are running on a Raspberry Pi with RPi.GPIO installed."
                 )
                 raise
 
             self._gpio.setmode(GPIO.BCM)
             self._gpio.setup(self._transmit_mode_pin, GPIO.OUT)
-            self._disable_transmit_mode()
+
+        elif self._use_rts_for_transmit_mode:
+            self._logger.debug("Using RTS line for transceiver control.")
+
+        self._disable_transmit_mode()
 
     def loop(self) -> None:
         """The main processing loop for the node, which must be called frequently.
