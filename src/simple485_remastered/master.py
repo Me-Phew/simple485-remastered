@@ -63,6 +63,12 @@ class Master(Node, ABC):
             max_request_retries (int): The default number of times to retry a
                 failed request
             log_level (int): The logging level for this instance
+
+        Raises:
+            ValueError: If the transceiver toggle time is not a positive float.
+            ValueError: If `transmit_mode_pin` and `use_rts_for_transmit_mode` are used at the same time.
+            ImportError: If a `transmit_mode_pin` is specified but the
+                `RPi.GPIO` library cannot be imported.
         """
         super().__init__(
             interface=interface,

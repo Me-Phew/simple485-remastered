@@ -65,6 +65,12 @@ class ThreadedMaster(Master):
                 is raised on a final timeout. If False, a `Response` object with
                 `success=False` is returned instead
             log_level (int): The logging level for this instance
+
+        Raises:
+            ValueError: If the transceiver toggle time is not a positive float.
+            ValueError: If `transmit_mode_pin` and `use_rts_for_transmit_mode` are used at the same time.
+            ImportError: If a `transmit_mode_pin` is specified but the
+                `RPi.GPIO` library cannot be imported.
         """
         super().__init__(
             interface=interface,
