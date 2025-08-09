@@ -94,6 +94,8 @@ class ThreadedMaster(Master):
         self._elapsed_ms: Optional[int] = None
         self._number_of_retries: Optional[int] = None
 
+        self._is_running = False
+
     def run_loop(self) -> None:
         """The main loop for the background communication thread.
 
@@ -101,9 +103,17 @@ class ThreadedMaster(Master):
         infinite loop that continuously processes the bus I/O.
         """
         self._logger.info("Starting background communication loop")
-        while True:
+        self._is_running = True
+        while self._is_running:
             self._loop()
             time.sleep(0.0001)  # Prevent busy-waiting
+
+        self._logger.info("Background communication loop stopped")
+
+    def stop(self):
+        """Signals the background communication loop to terminate."""
+        self._logger.info("Signaling background communication loop to stop.")
+        self._is_running = False
 
     def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
         """Handles a valid response received by the background thread.
