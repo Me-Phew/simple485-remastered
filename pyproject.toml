@@ -2,7 +2,7 @@
 name = "simple485-remastered"
 version = "0.1.0"
 description = "A simple, robust RS485 communication protocol library based on simple485."
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "mephew-python-commons",
     "pyserial>=3.5",
