@@ -3,7 +3,7 @@
 _A modern, rewritten, and enhanced version of the original [Simple485](https://github.com/rzeman9/Simple485) and [pySimple485](https://github.com/rzeman9/pySimple485) libraries._
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GNU%20GPLv3-green.svg)](https://opensource.org/licenses/MIT)
-![Python](https://img.shields.io/badge/python-3.13%2B-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 
 A modern, robust, and easy-to-use Python library for Master-Slave communication over an RS485 serial bus.
 
