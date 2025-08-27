@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # This thread runs the master's I/O loop, handling all low-level
     # communication. It must be running for any requests to be processed.
     # It is set as a daemon, so it will exit when the main thread finishes.
-    master_loop_thread = threading.Thread(target=threaded_address_range_test_master.run_loop, daemon=True)
+    master_loop_thread = threading.Thread(target=threaded_address_range_test_master.run_loop)
     master_loop_thread.start()
     logger.info("Master background thread started.")
 
@@ -147,3 +147,5 @@ if __name__ == "__main__":
         )
         current_address = FIRST_ADDRESS  # Reset for next iteration
     logger.info("--- Test Complete ---")
+
+    threaded_address_range_test_master.stop()

@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # 2. IMPORTANT: Create and start the background I/O thread.
     # This thread runs the master's communication loop and is essential for
     # sending and receiving any data. It is a daemon, so it exits with the main script.
-    master_loop_thread = threading.Thread(target=threaded_storm_test_master.run_loop, daemon=True)
+    master_loop_thread = threading.Thread(target=threaded_storm_test_master.run_loop)
     master_loop_thread.start()
     logger.info("Master background thread started.")
 
@@ -161,3 +161,5 @@ if __name__ == "__main__":
             f"{FIRST_ADDRESS} - {current_address - 1}."
         )
     logger.info("--- Storm Test Complete ---")
+
+    threaded_storm_test_master.stop()
