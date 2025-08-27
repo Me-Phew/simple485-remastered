@@ -85,6 +85,26 @@ class Node(ABC):
 
         self._logger.debug(f"Initialized {self.__class__.__name__} with address {self._address}")
 
+    def __enter__(self) -> "Node":
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        self.close()
+        return False
+
+    def is_open(self) -> bool:
+        """Returns True if the underlying bus is open, False otherwise."""
+        return self._bus.is_open()
+
+    def open(self) -> None:
+        """Opens the underlying bus."""
+        self._bus.open()
+
+    def close(self):
+        """Closes the underlying bus."""
+        self._bus.close()
+
     def _get_address(self) -> int:
         """Returns the configured address of the node."""
         return self._address

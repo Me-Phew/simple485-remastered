@@ -121,5 +121,5 @@ class AddrTestMaster(Master):
 
 if __name__ == "__main__":
     # Script entry point
-    addr_test_master = AddrTestMaster()
-    addr_test_master.run()
+    with AddrTestMaster() as addr_test_master:
+        addr_test_master.run()

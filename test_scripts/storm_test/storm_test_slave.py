@@ -144,5 +144,5 @@ class StormTestSlave(Slave):
 
 if __name__ == "__main__":
     # Script entry point
-    storm_test_slave = StormTestSlave()
-    storm_test_slave.run()
+    with StormTestSlave() as storm_test_slave:
+        storm_test_slave.run()

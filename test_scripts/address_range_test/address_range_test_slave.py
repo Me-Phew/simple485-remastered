@@ -150,5 +150,5 @@ class AddrTestSlave(Slave):
 
 if __name__ == "__main__":
     # Script entry point
-    addr_test_slave = AddrTestSlave()
-    addr_test_slave.run()
+    with AddrTestSlave() as addr_test_slave:
+        addr_test_slave.run()

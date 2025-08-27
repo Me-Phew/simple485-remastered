@@ -149,5 +149,5 @@ class StormTestMaster(Master):
 
 if __name__ == "__main__":
     # Script entry point
-    storm_test_master = StormTestMaster()
-    storm_test_master.run()
+    with StormTestMaster() as storm_test_master:
+        storm_test_master.run()

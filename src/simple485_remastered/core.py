@@ -64,8 +64,7 @@ class Simple485Remastered:
         """Initializes the Simple485 node.
 
         Args:
-            interface (serial.Serial): A pre-configured and open pySerial
-                interface object
+            interface (serial.Serial): A pre-configured pySerial interface object
             address (int): The unique address for this node, which must be
                 between FIRST_NODE_ADDRESS and LAST_NODE_ADDRESS
             transceiver_toggle_time_s (Optional[float]): The time in seconds to wait for
@@ -115,7 +114,6 @@ class Simple485Remastered:
         self._tx_active_high = tx_active_high
 
         self._gpio = None
-        self._init_transceiver_control()
 
         self._last_bus_activity = get_milliseconds()
         self._receiver_state: ReceiverState = ReceiverState.IDLE
@@ -123,7 +121,34 @@ class Simple485Remastered:
         self._received_messages: List[ReceivedMessage] = []
         self._output_messages: List[bytes] = []
 
+        self._is_open: bool = False
+
         self._logger.debug(f"Initialized {self.__class__.__name__} with address {self._address}")
+
+    def __enter__(self) -> "Simple485Remastered":
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        self.close()
+        return False
+
+    def is_open(self) -> bool:
+        """Returns True if the bus is open, False otherwise."""
+        return self._is_open
+
+    def open(self):
+        """Opens the bus."""
+        if self._is_open:
+            self._logger.warning("Bus is already open. Ignoring redundant open() call.")
+            return
+
+        self._logger.debug("Opening bus and initializing GPIO pins.")
+
+        self._init_serial_interface()
+        self._init_transceiver_control()
+
+        self._is_open = True
 
     def get_last_bus_activity(self) -> int:
         """Returns the timestamp of the last recorded bus activity in milliseconds."""
@@ -178,6 +203,18 @@ class Simple485Remastered:
 
         # Allow time for the transceiver to switch state
         time.sleep(self._transceiver_toggle_time_s)
+
+    def _init_serial_interface(self) -> None:
+        """Initializes the serial interface for the bus."""
+        if self._interface.is_open:
+            self._logger.debug("Serial interface already open. Skipping initialization.")
+            return
+
+        try:
+            self._interface.open()
+        except Exception as e:
+            self._logger.exception(f"Exception occurred while opening the serial interface.")
+            raise
 
     def _init_transceiver_control(self) -> None:
         """Initializes the configured transceiver control method (GPIO or RTS)."""
@@ -523,3 +560,24 @@ class Simple485Remastered:
         self._output_messages.pop(0)
         self._logger.info("Message sent successfully, buffer: %s", message_to_send.hex())
         return True
+
+    def close(self) -> None:
+        """Closes the serial port and cleans up GPIO pins.
+
+        This method should be called when the bus is no longer needed to ensure
+        that all underlying hardware resources are released properly.
+        """
+        if not self._is_open:
+            self._logger.warning("Bus is already closed. Ignoring redundant close() call.")
+            return
+
+        self._logger.info("Closing bus and cleaning up GPIO pins.")
+
+        if self._interface and self._interface.is_open:
+            self._interface.close()
+            self._logger.debug("Serial interface closed.")
+
+        if self._gpio:
+            self._gpio.cleanup()
+            self._gpio = None
+            self._logger.debug("GPIO pins cleaned up.")

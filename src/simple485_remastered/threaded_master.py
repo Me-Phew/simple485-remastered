@@ -103,11 +103,13 @@ class ThreadedMaster(Master):
         infinite loop that continuously processes the bus I/O.
         """
         self._logger.info("Starting background communication loop")
+        self.open()
         self._is_running = True
         while self._is_running:
             self._loop()
             time.sleep(0.0001)  # Prevent busy-waiting
 
+        self.close()
         self._logger.info("Background communication loop stopped")
 
     def stop(self):

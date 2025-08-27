@@ -63,13 +63,17 @@ def master(mock_serial_port, mocker):
     master_node = ConcreteMaster(interface=mock_serial_port)
     mocker.patch.object(master_node, "_handle_response")
     mocker.patch.object(master_node, "_handle_max_retries_exceeded")
+    master_node.open()
     return master_node
 
 
 @pytest.fixture
 def slave(mock_serial_port):
     """Creates an `EchoSlave` instance for testing."""
-    return EchoSlave(interface=mock_serial_port, address=SLAVE_ADDRESS)
+    slave_node = EchoSlave(interface=mock_serial_port, address=SLAVE_ADDRESS)
+    slave_node.open()
+
+    return slave_node
 
 
 def test_master_sends_slave_receives_and_responds(master, slave):
