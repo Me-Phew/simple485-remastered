@@ -1,3 +1,8 @@
+# Thread lock files
+.*.lock
+# Old log files
+*.log.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
