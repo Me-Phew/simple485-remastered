@@ -1,10 +1,6 @@
 """A threaded test script for the Master node to verify communication.
 
-This script demonstrates the intended usage of the `ThreadedMaster` class. It
-operates using two threads:
-1.  A background daemon thread that runs the master's I/O loop (`run_loop`).
-2.  The main thread, which sequentially calls the `ping_pong` method to send a
-    blocking request to each slave address and wait for a response.
+This script demonstrates the intended usage of the `ThreadedMaster` class.
 
 This script is intended to be run in conjunction with the
 `address_range_test_slave.py` script.
@@ -17,7 +13,6 @@ Usage:
 
 import logging
 import sys
-import threading
 from pathlib import Path
 from typing import Optional
 
@@ -68,7 +63,7 @@ class ThreadedAddressRangeTestMaster(ThreadedMaster):
     def ping_pong(self, address: int) -> Response:
         """Sends a "ping" and blocks until a "pong" is received or it times out.
 
-        This method builds upon the base `_send_request_and_wait_for_response`
+        This method builds upon the base `send_request`
         by adding application-level validation to ensure the response payload
         is exactly "pong".
 
@@ -82,7 +77,7 @@ class ThreadedAddressRangeTestMaster(ThreadedMaster):
             RequestException: If the request times out, or if a response is
                 received but its payload is not "pong".
         """
-        response = self._send_request_and_wait_for_response(address, "ping".encode("utf-8"))
+        response = self.send_request(address, "ping".encode("utf-8"))
 
         # The base method considers any valid reply a success. We add our own
         # application-level check on the payload.
@@ -115,14 +110,7 @@ if __name__ == "__main__":
 
     # 2. Instantiate the threaded master.
     threaded_address_range_test_master = ThreadedAddressRangeTestMaster(serial_port)
-
-    # 3. IMPORTANT: Create and start the background thread.
-    # This thread runs the master's I/O loop, handling all low-level
-    # communication. It must be running for any requests to be processed.
-    # It is set as a daemon, so it will exit when the main thread finishes.
-    master_loop_thread = threading.Thread(target=threaded_address_range_test_master.run_loop)
-    master_loop_thread.start()
-    logger.info("Master background thread started.")
+    threaded_address_range_test_master.start()
 
     # 4. The main thread now runs the test loop, making blocking requests.
     current_address = FIRST_ADDRESS

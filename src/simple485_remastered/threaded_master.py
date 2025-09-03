@@ -20,9 +20,10 @@ class ThreadedMaster(Master):
     simple, blocking request/response model suitable for multithreaded
     applications.
 
-    The intended usage is to run the `run_loop()` method in a dedicated background
-    thread. Other threads can then call `_send_request_and_wait_for_response()`
+    The intended usage is to call the `start()` method
+    and then call `send_request()` from the other threads
     to send a request and block until a response is received or a timeout occurs.
+    When done call the `stop()` method to cleanly shut down the background thread.
 
     Attributes:
         _request_lock (threading.Lock): Ensures only one request can be active
@@ -95,63 +96,47 @@ class ThreadedMaster(Master):
         self._number_of_retries: Optional[int] = None
 
         self._is_running = False
+        self._communications_thread_started_event = threading.Event()
+        self._communications_thread: Optional[threading.Thread] = None
 
-    def run_loop(self) -> None:
-        """The main loop for the background communication thread.
+    def start(self) -> None:
+        """Starts the threaded master instance.
 
-        This method should be the target of a `threading.Thread`. It runs an
-        infinite loop that continuously processes the bus I/O.
+        Initializes the serial interface and starts the I/O processing loop.
+        This method will block until the background thread is fully running and ready
+        to accept requests.
+
+        Raises:
+            RuntimeError: If the master is already running.
         """
-        self._logger.info("Starting background communication loop")
-        self.open()
-        self._is_running = True
-        while self._is_running:
-            self._loop()
-            time.sleep(0.0001)  # Prevent busy-waiting
+        if self._is_running:
+            raise RuntimeError("The master is already running.")
 
-        self.close()
-        self._logger.info("Background communication loop stopped")
+        self._logger.info("Starting master...")
+        self._communications_thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._communications_thread.start()
+
+        # Wait for the background thread to confirm it's initialized and running
+        if not self._communications_thread_started_event.wait(timeout=5.0):
+            raise RuntimeError("Background communication thread failed to start.")
+        self._logger.info("Master started successfully.")
 
     def stop(self):
-        """Signals the background communication loop to terminate."""
-        self._logger.info("Signaling background communication loop to stop.")
+        """Stops the threaded master instance gracefully.
+
+        Signals the thread to terminate and waits for it to shut down cleanly.
+        """
+        if not self._is_running or self._communications_thread is None:
+            return
+
+        self._logger.info("Stopping master...")
         self._is_running = False
+        self._communications_thread.join()  # Wait for the thread to finish
+        self._communications_thread = None
+        self._logger.info("Master stopped.")
 
-    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
-        """Handles a valid response received by the background thread.
-
-        This method stores the received message and its metadata, then sets the
-        response event to unblock the waiting request thread.
-
-        Args:
-            request (Request): The original request that was sent
-            message (ReceivedMessage): The response message from the slave
-            elapsed_ms (Optional[int]): The round-trip time for the request
-        """
-        self._logger.info(f"Response received. Payload: {message.payload.hex()}")
-        self._response_message = message
-        self._elapsed_ms = elapsed_ms
-        self._number_of_retries = request.retry_count
-        self._response_event.set()
-
-    def _handle_max_retries_exceeded(self, request: Request) -> None:
-        """Handles the failure of a request after all retries are exhausted.
-
-        This method is called by the background thread. It clears the response
-        data and sets the response event to unblock the waiting request thread,
-        signaling a timeout.
-
-        Args:
-            request (Request): The request that has ultimately failed.
-        """
-        self._logger.warning("Request timed out after all retries.")
-        self._response_message = None
-        self._elapsed_ms = None
-        self._number_of_retries = request.retry_count
-        self._response_event.set()
-
-    def _send_request_and_wait_for_response(self, address: int, payload: bytes) -> Response:
-        """Sends a request and blocks until a response is received or it times out.
+    def send_request(self, address: int, payload: bytes) -> Response:
+        """Sends a request and blocks until a response is received or the request times out.
 
         This method is thread-safe and is the primary way for application code
         to interact with the bus.
@@ -170,9 +155,16 @@ class ThreadedMaster(Master):
         Raises:
             MaxRetriesExceededException: If `raise_on_response_error` is True, and
                 the request times out after all retries.
-            RuntimeError: If an internal state error occurs with the threading event.
+            RuntimeError: If the master is not running,
+                or if an internal state error occurs with the threading event.
         """
+        if not self._is_running:
+            raise RuntimeError("The master is not running. Call start() first.")
+
         with self._request_lock:
+            if not self._is_running:
+                raise RuntimeError("The master was stopped before the request could be sent.")
+
             # Clear previous response state
             self._response_event.clear()
             self._response_message = None
@@ -213,3 +205,58 @@ class ThreadedMaster(Master):
                 payload=self._response_message.payload,
                 retry_count=self._number_of_retries,
             )
+
+    def _run_loop(self) -> None:
+        """The main loop for the background communication thread.
+
+        This method is the target of the internal `threading.Thread`. It runs an
+        infinite loop that continuously processes the bus I/O.
+        """
+        self._is_running = True
+        try:
+            self._logger.info("Background communication loop starting")
+            self.open()
+            self._communications_thread_started_event.set()  # Signal that we are ready
+
+            while self._is_running:
+                self._loop()
+                time.sleep(0.0001)  # Prevent busy-waiting
+
+        finally:
+            self.close()
+            self._communications_thread_started_event.clear()
+            self._is_running = False
+            self._logger.info("Background communication loop stopped")
+
+    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+        """Handles a valid response received by the background thread.
+
+        This method stores the received message and its metadata, then sets the
+        response event to unblock the waiting request thread.
+
+        Args:
+            request (Request): The original request that was sent
+            message (ReceivedMessage): The response message from the slave
+            elapsed_ms (Optional[int]): The round-trip time for the request
+        """
+        self._logger.info(f"Response received. Payload: {message.payload.hex()}")
+        self._response_message = message
+        self._elapsed_ms = elapsed_ms
+        self._number_of_retries = request.retry_count
+        self._response_event.set()
+
+    def _handle_max_retries_exceeded(self, request: Request) -> None:
+        """Handles the failure of a request after all retries are exhausted.
+
+        This method is called by the background thread. It clears the response
+        data and sets the response event to unblock the waiting request thread,
+        signaling a timeout.
+
+        Args:
+            request (Request): The request that has ultimately failed.
+        """
+        self._logger.warning("Request timed out after all retries.")
+        self._response_message = None
+        self._elapsed_ms = None
+        self._number_of_retries = request.retry_count
+        self._response_event.set()

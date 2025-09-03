@@ -4,9 +4,6 @@ This script demonstrates the intended usage of the `ThreadedMaster` for running
 a rigorous, high-volume test.
 
 Test Architecture:
-- **Two-Thread Model:** It starts a background daemon thread to handle all low-level
-  bus I/O. The main thread then runs the test logic, making synchronous,
-  blocking requests.
 - **Hard-Fail Behavior:** The script is designed to terminate immediately upon the
   first failure. Any timeout or data mismatch will raise an unhandled
   exception, stopping the test.
@@ -31,7 +28,6 @@ import logging
 import random
 import string
 import sys
-import threading
 from pathlib import Path
 
 import serial
@@ -95,7 +91,7 @@ class ThreadedStormTestMaster(ThreadedMaster):
                 validation of the response payload fails.
         """
         payload = "".join(random.choices(string.ascii_letters + string.digits, k=payload_length))
-        response = self._send_request_and_wait_for_response(address, payload.encode("utf-8"))
+        response = self.send_request(address, payload.encode("utf-8"))
 
         if not response.success:
             logger.error(f"Request failed for address {address}: {response.failure_reason}")
@@ -130,13 +126,7 @@ if __name__ == "__main__":
 
     # 1. Instantiate the threaded master.
     threaded_storm_test_master = ThreadedStormTestMaster()
-
-    # 2. IMPORTANT: Create and start the background I/O thread.
-    # This thread runs the master's communication loop and is essential for
-    # sending and receiving any data. It is a daemon, so it exits with the main script.
-    master_loop_thread = threading.Thread(target=threaded_storm_test_master.run_loop)
-    master_loop_thread.start()
-    logger.info("Master background thread started.")
+    threaded_storm_test_master.start()
 
     # 3. The main thread runs the test logic.
     for i in range(ITERATIONS):
