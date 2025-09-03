@@ -108,14 +108,3 @@ def mock_rpi_gpio(mocker):
     mock_gpio = MagicMock()
     sys.modules["RPi.GPIO"] = mock_gpio
     return mock_gpio
-
-
-@pytest.fixture(autouse=True)
-def mock_sleep(mocker):
-    """An auto use fixture that mocks `time.sleep`.
-
-    This dramatically speeds up tests by eliminating all artificial delays that
-    were added for hardware timing (e.g., `TRANSCEIVER_TOGGLE_TIME_S`). It
-    patches `time.sleep` to do nothing.
-    """
-    return mocker.patch("time.sleep", return_value=None)
