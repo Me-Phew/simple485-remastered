@@ -82,7 +82,7 @@ class Simple485Remastered:
             ValueError: If the transceiver toggle time is not a positive float.
             ValueError: If `transmit_mode_pin` and `use_rts_for_transmit_mode` are used at the same time.
             ImportError: If a `transmit_mode_pin` is specified but the
-                `RPi.GPIO` library cannot be imported.
+                `lgpio` library cannot be imported.
         """
         self._logger: logging.Logger = logger_factory.get_logger(self.__class__.__name__, level=log_level)
 
@@ -113,7 +113,7 @@ class Simple485Remastered:
         self._use_rts_for_transmit_mode = use_rts_for_transmit_mode
         self._tx_active_high = tx_active_high
 
-        self._gpio = None
+        self._gpio_chip_handle = None
 
         self._last_bus_activity = get_milliseconds()
         self._receiver_state: ReceiverState = ReceiverState.IDLE
@@ -185,7 +185,7 @@ class Simple485Remastered:
         if self._use_rts_for_transmit_mode:
             self._interface.rts = self._tx_active_high
         else:
-            self._gpio.output(self._transmit_mode_pin, self._tx_active_high)
+            self._lgpio.gpio_write(self._gpio_chip_handle, self._transmit_mode_pin, self._tx_active_high)
 
         # Allow time for the transceiver to switch state
         time.sleep(self._transceiver_toggle_time_s)
@@ -199,7 +199,7 @@ class Simple485Remastered:
         if self._use_rts_for_transmit_mode:
             self._interface.rts = not self._tx_active_high
         else:
-            self._gpio.output(self._transmit_mode_pin, not self._tx_active_high)
+            self._lgpio.gpio_write(self._gpio_chip_handle, self._transmit_mode_pin, not self._tx_active_high)
 
         # Allow time for the transceiver to switch state
         time.sleep(self._transceiver_toggle_time_s)
@@ -221,18 +221,19 @@ class Simple485Remastered:
         if self._transmit_mode_pin is not None:
             self._logger.debug(f"Using GPIO pin {self._transmit_mode_pin} for transceiver control.")
             try:
-                import RPi.GPIO as GPIO
+                import lgpio
 
-                self._gpio = GPIO
+                self._lgpio = lgpio
+
+                self._gpio_chip_handle = self._lgpio.gpiochip_open(0)
             except (ImportError, RuntimeError):
                 self._logger.error(
-                    "Enable pin configured but RPi.GPIO not available. "
-                    "Ensure you are running on a Raspberry Pi with RPi.GPIO installed."
+                    "Enable pin configured but lgpio not available. "
+                    "Ensure lgpio is installed and available to the Python interpreter."
                 )
                 raise
 
-            self._gpio.setmode(GPIO.BCM)
-            self._gpio.setup(self._transmit_mode_pin, GPIO.OUT)
+            self._lgpio.gpio_claim_output(self._gpio_chip_handle, self._transmit_mode_pin, not self._tx_active_high)
 
         elif self._use_rts_for_transmit_mode:
             self._logger.debug("Using RTS line for transceiver control.")
@@ -577,7 +578,8 @@ class Simple485Remastered:
             self._interface.close()
             self._logger.debug("Serial interface closed.")
 
-        if self._gpio:
-            self._gpio.cleanup()
-            self._gpio = None
-            self._logger.debug("GPIO pins cleaned up.")
+        if self._gpio_chip_handle is not None:
+            self._lgpio.gpio_free(self._gpio_chip_handle, self._transmit_mode_pin)
+            self._lgpio.gpiochip_close(self._gpio_chip_handle)
+            self._gpio_chip_handle = None
+            self._logger.debug("GPIO cleaned up.")

@@ -58,7 +58,7 @@ This project uses `uv` for fast, modern package management.
     ```bash
     uv pip sync
     ```
-    > **Note on Raspberry Pi:** For use with GPIO control, ensure `RPi.GPIO` is included in your project's dependencies before the lock file is generated.
+    > **Note on Raspberry Pi (or other GPIO-capable systems):** For use with GPIO control, ensure `lgpio` is included in your project's dependencies before the lock file is generated.
 
 ## Core Concepts
 

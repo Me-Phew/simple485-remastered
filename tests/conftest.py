@@ -6,10 +6,10 @@ dependencies that would otherwise require a physical device.
 
 The fixtures in this file mock:
 - The `serial.Serial` port for communication.
-- The `RPi.GPIO` module to prevent import errors on non-RPi systems.
+- The `lgpio` module to prevent import errors on non-RPi systems.
 - The `time.sleep` function to make tests run instantly.
 
-Fixtures to mock `RPi.GPIO` and `time.sleep` are marked as `autouse=True`,
+Fixtures to mock `lgpio` and `time.sleep` are marked as `autouse=True`,
 so they are automatically applied to all tests without needing to be explicitly
 requested.
 """
@@ -97,14 +97,14 @@ def mock_serial_port(mocker):
 
 
 @pytest.fixture(autouse=True)
-def mock_rpi_gpio(mocker):
-    """An autouse fixture that mocks the `RPi.GPIO` module.
+def mock_lgpio(mocker):
+    """An autouse fixture that mocks the `lgpio` module.
 
-    This prevents `ImportError` when running tests on systems that are not a
-    Raspberry Pi or do not have the RPi.GPIO library installed (e.g., developer
+    This prevents `ImportError` when running tests on systems that
+    do not have the lgpio library installed (e.g., developer
     machines, CI/CD environments). It replaces the module in `sys.modules`
     with a `MagicMock`, which absorbs any calls without error.
     """
     mock_gpio = MagicMock()
-    sys.modules["RPi.GPIO"] = mock_gpio
+    sys.modules["lgpio"] = mock_gpio
     return mock_gpio

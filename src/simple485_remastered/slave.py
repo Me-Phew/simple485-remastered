@@ -60,7 +60,7 @@ class Slave(Node, ABC):
             ValueError: If the transceiver toggle time is not a positive float.
             ValueError: If `transmit_mode_pin` and `use_rts_for_transmit_mode` are used at the same time.
             ImportError: If a `transmit_mode_pin` is specified but the
-                `RPi.GPIO` library cannot be imported.
+                `lgpio` library cannot be imported.
         """
         if not is_valid_slave_address(address):
             raise ValueError(
