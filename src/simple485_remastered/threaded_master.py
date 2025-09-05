@@ -220,7 +220,7 @@ class ThreadedMaster(Master):
 
             while self._is_running:
                 self._loop()
-                time.sleep(0.0001)  # Prevent busy-waiting
+                time.sleep(0.005)  # Prevent busy-waiting
 
         finally:
             self.close()
