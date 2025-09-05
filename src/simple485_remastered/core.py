@@ -213,7 +213,7 @@ class Simple485Remastered:
         try:
             self._interface.open()
         except Exception as e:
-            self._logger.exception(f"Exception occurred while opening the serial interface.")
+            self._logger.exception(f"Exception occurred while opening the serial interface: {e}")
             raise
 
     def _init_transceiver_control(self) -> None:
