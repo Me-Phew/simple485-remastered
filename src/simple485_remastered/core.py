@@ -366,17 +366,7 @@ class Simple485Remastered:
             case ReceiverState.SOH_RECEIVED:
                 # Received SOH, expecting destination address.
                 self._receiving_message.dst_address = byte[0]
-
-                # Check if the message is for this node or a broadcast.
-                if (
-                    self._receiving_message.dst_address != self._address
-                    and self._receiving_message.dst_address != BROADCAST_ADDRESS
-                ):
-                    self._logger.info("Received message for another address. Ignoring.")
-                    self._receiver_state = ReceiverState.IDLE
-                    self._receiving_message = None
-                else:
-                    self._receiver_state = ReceiverState.DEST_ADDRESS_RECEIVED
+                self._receiver_state = ReceiverState.DEST_ADDRESS_RECEIVED
 
             case ReceiverState.DEST_ADDRESS_RECEIVED:
                 # Expecting source address.
@@ -395,7 +385,7 @@ class Simple485Remastered:
                     self._logger.warning(
                         f"Received invalid message length of: {self._receiving_message.length}. Dropping."
                     )
-                    self._receiver_state = ReceiverState.IDLE
+                    self._receiver_state = ReceiverState.IDLE # Here we must reset to IDLE because we don't know how to read the rest of the message
                     self._receiving_message = None
                 else:
                     self._receiver_state = ReceiverState.MESSAGE_LEN_RECEIVED
@@ -412,7 +402,7 @@ class Simple485Remastered:
                     self._receiver_state = ReceiverState.STX_RECEIVED
                 else:
                     self._logger.warning("Expected STX, but got other data. Dropping.")
-                    self._receiver_state = ReceiverState.IDLE
+                    self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the state is already corrupted
                     self._receiving_message = None
 
             case ReceiverState.STX_RECEIVED:
@@ -442,13 +432,13 @@ class Simple485Remastered:
                         self._receiver_state = ReceiverState.ETX_RECEIVED
                     else:
                         self._logger.warning("ETX received but payload length is incorrect. Dropping.")
-                        self._receiver_state = ReceiverState.IDLE
+                        self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the message itself is corrupted
                         self._receiving_message = None
                     return
 
                 # If we get here, the byte is invalid.
                 self._logger.warning("Invalid data byte. Dropping.")
-                self._receiver_state = ReceiverState.IDLE
+                self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the message itself is corrupted
                 self._receiving_message = None
 
             case ReceiverState.ETX_RECEIVED:
@@ -456,24 +446,32 @@ class Simple485Remastered:
                 if byte[0] == self._receiving_message.crc:
                     self._receiver_state = ReceiverState.CRC_OK
                 else:
-                    self._logger.warning("CRC mismatch. Dropping.")
+                    self._logger.warning("CRC mismatch. Dropping.") # Here resetting to IDLE is the best option because the message itself is corrupted
                     self._receiver_state = ReceiverState.IDLE
                     self._receiving_message = None
 
             case ReceiverState.CRC_OK:
                 # Expecting End of Transmission (EOT).
-                if byte == ControlSequence.EOT:
-                    # The Message is complete and valid. Create a ReceivedMessage object.
-                    message = ReceivedMessage(
-                        src_address=self._receiving_message.src_address,
-                        dest_address=self._receiving_message.dst_address,
-                        transaction_id=self._receiving_message.transaction_id,
-                        length=self._receiving_message.length,
-                        payload=self._receiving_message.payload_buffer,
-                        _originating_bus=self,
+                if byte == ControlSequence.EOT:                    
+                    is_for_us = (
+                        self._receiving_message.dst_address == self._address
+                        or self._receiving_message.dst_address == BROADCAST_ADDRESS
                     )
-                    self._received_messages.append(message)
-                    self._logger.info(f"Successfully received message: {message}")
+                    
+                    if is_for_us:
+                        # The Message is complete and valid. Create a ReceivedMessage object.
+                        message = ReceivedMessage(
+                            src_address=self._receiving_message.src_address,
+                            dest_address=self._receiving_message.dst_address,
+                            transaction_id=self._receiving_message.transaction_id,
+                            length=self._receiving_message.length,
+                            payload=self._receiving_message.payload_buffer,
+                            _originating_bus=self,
+                        )
+                        self._received_messages.append(message)
+                        self._logger.info(f"Successfully received message: {message}")
+                    else:
+                        self._logger.info("Received message for another address. Ignoring.")
                 else:
                     self._logger.warning("Expected EOT. Dropping packet.")
 
