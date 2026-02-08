@@ -131,7 +131,21 @@ class ThreadedMaster(Master):
 
         self._logger.info("Stopping master...")
         self._is_running = False
-        self._communications_thread.join()  # Wait for the thread to finish
+        
+        # Unblock any waiting request thread to allow it to exit if we're stopping while a request is in-flight
+        self._response_event.set()
+        
+        try:
+            self.close()
+        except Exception:
+            self._logger.exception("Error closing serial during stop")
+
+        if threading.current_thread() is not self._communications_thread:
+            self._communications_thread.join(timeout=5.0)  # Wait for the thread to finish
+        
+        if self._communications_thread.is_alive():
+            self._logger.error("Communications thread did not exit cleanly!")
+        
         self._communications_thread = None
         self._logger.info("Master stopped.")
 
