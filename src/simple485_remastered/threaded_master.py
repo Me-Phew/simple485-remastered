@@ -7,7 +7,7 @@ from typing import Optional
 
 import serial
 
-from . import Master
+from .master import DEFAULT_RESPONSE_TIMEOUT_MS, DEFAULT_MAX_RETRIES, Master
 from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .exceptions import MaxRetriesExceededException
 from .models import ReceivedMessage, Request, Response
@@ -43,8 +43,8 @@ class ThreadedMaster(Master):
         transmit_mode_pin: Optional[int] = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
-        request_timeout_ms: int = 1000,
-        max_request_retries: int = 3,
+        request_timeout_ms: int = DEFAULT_RESPONSE_TIMEOUT_MS,
+        max_request_retries: int = DEFAULT_MAX_RETRIES,
         raise_on_response_error: bool = True,
         log_level: int = logging.INFO,
     ):

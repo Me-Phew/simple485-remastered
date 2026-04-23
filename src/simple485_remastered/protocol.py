@@ -29,9 +29,6 @@ BITS_PER_BYTE = 10
 #: If this time is exceeded, the receiver resets and discards the packet.
 PACKET_TIMEOUT_MS = 500
 
-#: Default time (ms) for a Master to wait for a Slave's response.
-DEFAULT_RESPONSE_TIMEOUT_MS = 2000
-
 #: Default number of times a Master will retry a failed request.
 DEFAULT_MAX_RETRIES = 3
 

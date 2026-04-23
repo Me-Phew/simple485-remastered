@@ -12,6 +12,12 @@ from .node import Node
 from .protocol import MASTER_ADDRESS
 from .utils import get_milliseconds
 
+#: Default time (ms) for a Master to wait for a Slave's response.
+DEFAULT_RESPONSE_TIMEOUT_MS = 2000
+
+#: Default number of times a Master will retry a failed request.
+DEFAULT_MAX_RETRIES = 3
+
 
 class Master(Node, ABC):
     """An abstract base class for a Master node on the bus.
@@ -41,8 +47,8 @@ class Master(Node, ABC):
         transmit_mode_pin: Optional[int] = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
-        request_timeout_ms: int = 1000,
-        max_request_retries: int = 3,
+        request_timeout_ms: int = DEFAULT_RESPONSE_TIMEOUT_MS,
+        max_request_retries: int = DEFAULT_MAX_RETRIES,
         log_level: int = logging.INFO,
     ):
         """Initializes the Master node.
