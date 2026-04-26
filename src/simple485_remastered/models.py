@@ -26,6 +26,8 @@ class ReceivingMessage:
 
     Attributes:
         timestamp (Optional[int]): The time when the first byte (SOH) was received
+        last_byte_timestamp (Optional[int]): The time the last byte of the current
+            packet was received; used for inter-byte timeout detection
         dst_address (Optional[int]): The destination address from the packet
         src_address (Optional[int]): The source address from the packet
         transaction_id (Optional[int]): The transaction ID from the packet
@@ -37,6 +39,7 @@ class ReceivingMessage:
     """
 
     timestamp: Optional[int] = None
+    last_byte_timestamp: Optional[int] = None
     dst_address: Optional[int] = None
     src_address: Optional[int] = None
     transaction_id: Optional[int] = None

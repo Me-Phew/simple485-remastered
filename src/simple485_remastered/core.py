@@ -10,7 +10,9 @@ from .models import ReceivingMessage, ReceivedMessage
 from .protocol import (
     MAX_MESSAGE_LEN,
     LINE_READY_TIME_MS,
-    PACKET_TIMEOUT_MS,
+    INTER_BYTE_TIMEOUT_MS,
+    LONG_MESSAGE_RESPONSE_DELAY_MS,
+    LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD,
     BROADCAST_ADDRESS,
     ReceiverState,
     ControlSequence,
@@ -46,8 +48,8 @@ class Simple485Remastered:
             RS485 transceiver to switch between transmit and receive modes.
         _received_messages (List[ReceivedMessage]): A queue for fully parsed
             incoming messages.
-        _output_messages (List[bytes]): A queue for packetized messages waiting
-            for transmission.
+        _output_messages (List[tuple[bytes, int]]): Queued (packet buffer,
+            minimum idle time ms) pairs waiting for transmission.
     """
 
     def __init__(
@@ -119,7 +121,8 @@ class Simple485Remastered:
         self._receiver_state: ReceiverState = ReceiverState.IDLE
         self._receiving_message: ReceivingMessage | None = None
         self._received_messages: List[ReceivedMessage] = []
-        self._output_messages: List[bytes] = []
+        self._next_response_delay_ms: int = LINE_READY_TIME_MS
+        self._output_messages: List[tuple[bytes, int]] = []
 
         self._is_open: bool = False
 
@@ -247,18 +250,19 @@ class Simple485Remastered:
         1.  Processes incoming bytes from the serial buffer using a state machine.
         2.  Transmits any pending outgoing messages if the bus is free.
 
-        It also handles packet timeouts, resetting the receiver state if a
-        packet is not fully received within a configured time limit.
+        It also handles inter-byte timeouts, resetting the receiver state if
+        bytes of a packet stop arriving within a configured time limit.
         """
         self._receive()
         self._transmit()
 
-        # Check for a stalled receiver and reset if a packet times out.
         if (
             self._receiver_state != ReceiverState.IDLE
-            and get_milliseconds() > self._receiving_message.timestamp + PACKET_TIMEOUT_MS
+            and self._receiving_message is not None
+            and self._receiving_message.last_byte_timestamp is not None
+            and get_milliseconds() > self._receiving_message.last_byte_timestamp + INTER_BYTE_TIMEOUT_MS
         ):
-            self._logger.warning("Packet timeout, resetting receiver state.")
+            self._logger.warning("Inter-byte timeout, resetting receiver state.")
             self._receiver_state = ReceiverState.IDLE
             self._receiving_message = None
 
@@ -327,7 +331,9 @@ class Simple485Remastered:
         text_buffer += ControlSequence.ETX + bytes([crc]) + ControlSequence.EOT + ControlSequence.LF * 2
 
         self._logger.debug(f"Queuing message, buffer: {text_buffer.hex()}, dest_address: {dst_address}")
-        self._output_messages.append(text_buffer)
+        response_delay_ms = max(LINE_READY_TIME_MS, self._next_response_delay_ms)
+        self._next_response_delay_ms = LINE_READY_TIME_MS
+        self._output_messages.append((text_buffer, response_delay_ms))
         return True
 
     def available(self) -> int:
@@ -361,7 +367,8 @@ class Simple485Remastered:
                 if byte == ControlSequence.SOH:
                     self._receiver_state = ReceiverState.SOH_RECEIVED
 
-                    self._receiving_message = ReceivingMessage(timestamp=get_milliseconds())
+                    t = get_milliseconds()
+                    self._receiving_message = ReceivingMessage(timestamp=t, last_byte_timestamp=t)
 
             case ReceiverState.SOH_RECEIVED:
                 # Received SOH, expecting destination address.
@@ -459,6 +466,13 @@ class Simple485Remastered:
                     )
                     
                     if is_for_us:
+                        if self._receiving_message.length is not None and (
+                            self._receiving_message.length > LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD
+                        ):
+                            self._next_response_delay_ms = LONG_MESSAGE_RESPONSE_DELAY_MS
+                        else:
+                            self._next_response_delay_ms = LINE_READY_TIME_MS
+
                         # The Message is complete and valid. Create a ReceivedMessage object.
                         message = ReceivedMessage(
                             src_address=self._receiving_message.src_address,
@@ -495,6 +509,8 @@ class Simple485Remastered:
             self._logger.debug(f"Received byte: {byte.hex()} in state {self._receiver_state.name}")
 
             self._process_byte(byte)
+            if self._receiving_message is not None:
+                self._receiving_message.last_byte_timestamp = self._last_bus_activity
 
     def _transmit(self) -> bool:
         """Handles the transmission of the next message in the output queue.
@@ -509,11 +525,11 @@ class Simple485Remastered:
             return False
 
         # Basic collision avoidance: wait for the line to be clear.
-        if get_milliseconds() < self._last_bus_activity + LINE_READY_TIME_MS:
+        message_to_send, response_delay_ms = self._output_messages[0]
+        if get_milliseconds() < self._last_bus_activity + response_delay_ms:
             self._logger.debug("Line not ready for transmission, waiting.")
             return False
 
-        message_to_send = self._output_messages[0]
         self._logger.debug(f"Attempting to transmit a message, buffer: {message_to_send.hex()}")
 
         try:

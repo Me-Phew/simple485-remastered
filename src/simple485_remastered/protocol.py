@@ -25,9 +25,17 @@ LINE_READY_TIME_MS = 10
 #: This constant is crucial for calculating accurate transmission times.
 BITS_PER_BYTE = 10
 
-#: The maximum time (ms) allowed between bytes of an incoming packet.
+#: The maximum time (ms) allowed between consecutive bytes of an incoming packet.
 #: If this time is exceeded, the receiver resets and discards the packet.
-PACKET_TIMEOUT_MS = 500
+INTER_BYTE_TIMEOUT_MS = 500
+
+#: Minimum idle time (ms) on the bus before this node may send a response after
+#: receiving a "long" request (see :data:`LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD`).
+LONG_MESSAGE_RESPONSE_DELAY_MS = 500
+
+#: Payload length above which :data:`LONG_MESSAGE_RESPONSE_DELAY_MS` applies
+#: to the next outgoing transmission.
+LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD = 14
 
 #: Default number of times a Master will retry a failed request.
 DEFAULT_MAX_RETRIES = 3
