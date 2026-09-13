@@ -7,11 +7,38 @@ dependencies = [
     "mephew-python-commons",
     "pyserial>=3.5",
 ]
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-mock",
-]
 
 [tool.uv.sources]
 mephew-python-commons = { git = "https://github.com/Me-Phew/mephew-python-commons.git" }
+cz-conventional-commits-jira-optional = { git = "https://github.com/Me-Phew/cz-conventional-commits-jira-optional.git" }
+
+[dependency-groups]
+dev = [
+  "commitizen>=4.10.0",
+  "cz-conventional-commits-jira-optional",
+  "pre-commit>=4.5.0",
+  "pytest",
+  "pytest-mock",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "C4", "SIM", "PTH", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+include = ["src"]
+exclude = ["**/core.py"]

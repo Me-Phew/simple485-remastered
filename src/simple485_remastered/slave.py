@@ -2,15 +2,13 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import serial
 
 from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .models import ReceivedMessage
 from .node import Node
-from .protocol import FIRST_NODE_ADDRESS, MASTER_ADDRESS, LAST_NODE_ADDRESS
-from .protocol import is_valid_slave_address
+from .protocol import FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, MASTER_ADDRESS, is_valid_slave_address
 
 
 class Slave(Node, ABC):
@@ -31,9 +29,9 @@ class Slave(Node, ABC):
         self,
         *,
         interface: serial.Serial,
-        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transceiver_toggle_time_s: float | None = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         address: int,
-        transmit_mode_pin: Optional[int] = None,
+        transmit_mode_pin: int | None = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
         log_level: int = logging.INFO,
@@ -86,7 +84,7 @@ class Slave(Node, ABC):
         """
         self._loop()
 
-    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Routes an incoming message to the appropriate handler.
 
         This method implements the abstract method from the `Node` parent. It

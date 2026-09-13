@@ -11,12 +11,9 @@ The testing strategy involves:
   methods on the `Master` to assert that the correct logic was triggered.
 """
 
-from typing import Optional
-
 import pytest
 
-from src.simple485_remastered import Master, Slave
-from src.simple485_remastered import ReceivedMessage, Request
+from src.simple485_remastered import Master, ReceivedMessage, Request, Slave
 from src.simple485_remastered.utils import get_milliseconds
 
 SLAVE_ADDRESS = 5
@@ -52,9 +49,7 @@ def master(mock_serial_port, mocker):
     class ConcreteMaster(Master):
         """A concrete implementation of Master for testing purposes."""
 
-        def _handle_response(
-            self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None
-        ) -> None:
+        def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
             pass
 
         def _handle_max_retries_exceeded(self, request: Request) -> None:
@@ -146,7 +141,7 @@ def test_max_retries_exceeded(master, mocker):
     # 2. Act: Simulate time passing to trigger all timeouts and retries.
     # The loop runs `max_retries + 1` times to cover the initial request
     # plus each retry attempt.
-    for i in range(max_retries + 1):
+    for _ in range(max_retries + 1):
         # Advance the mock time far enough to exceed the request timeout.
         time_now += timeout + 100
         mock_get_ms.return_value = time_now

@@ -2,14 +2,13 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import serial
 
-from .core import Simple485Remastered, DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
+from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S, Simple485Remastered
 from .models import ReceivedMessage
 from .protocol import BROADCAST_ADDRESS, FIRST_NODE_ADDRESS, LAST_NODE_ADDRESS, is_valid_node_address
-from .utils import logger_factory, get_milliseconds
+from .utils import get_milliseconds, logger_factory
 
 
 class Node(ABC):
@@ -33,9 +32,9 @@ class Node(ABC):
         self,
         *,
         interface: serial.Serial,
-        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transceiver_toggle_time_s: float | None = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
         address: int,
-        transmit_mode_pin: Optional[int] = None,
+        transmit_mode_pin: int | None = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
         log_level: int = logging.INFO,
@@ -81,7 +80,7 @@ class Node(ABC):
             tx_active_high=tx_active_high,
             log_level=log_level,
         )
-        self._message_sent_ms: Optional[int] = None
+        self._message_sent_ms: int | None = None
 
         self._logger.debug(f"Initialized {self.__class__.__name__} with address {self._address}")
 
@@ -152,7 +151,7 @@ class Node(ABC):
                 self._logger.error(f"Error while handling incoming message: {e}")
 
     @abstractmethod
-    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Abstract method to be implemented by subclasses to process messages.
 
         '_Loop' calls this method whenever a complete and valid message

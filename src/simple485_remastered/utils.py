@@ -45,7 +45,7 @@ def get_milliseconds() -> int:
     Returns:
         int: The current time in milliseconds since the Epoch.
     """
-    return int(round(time.time() * 1000))
+    return round(time.time() * 1000)
 
 
 def microseconds_to_seconds(microseconds: int | float) -> float:

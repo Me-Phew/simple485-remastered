@@ -3,13 +3,12 @@
 import logging
 import threading
 import time
-from typing import Optional
 
 import serial
 
-from .master import DEFAULT_RESPONSE_TIMEOUT_MS, DEFAULT_MAX_RETRIES, Master
 from .core import DEFAULT_TRANSCEIVER_TOGGLE_TIME_S
 from .exceptions import MaxRetriesExceededException
+from .master import DEFAULT_MAX_RETRIES, DEFAULT_RESPONSE_TIMEOUT_MS, Master
 from .models import ReceivedMessage, Request, Response
 
 
@@ -39,8 +38,8 @@ class ThreadedMaster(Master):
         self,
         *,
         interface: serial.Serial,
-        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
-        transmit_mode_pin: Optional[int] = None,
+        transceiver_toggle_time_s: float | None = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transmit_mode_pin: int | None = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
         request_timeout_ms: int = DEFAULT_RESPONSE_TIMEOUT_MS,
@@ -91,13 +90,13 @@ class ThreadedMaster(Master):
         self._response_event = threading.Event()
 
         # Shared state to pass results from the background thread to the foreground
-        self._response_message: Optional[ReceivedMessage] = None
-        self._elapsed_ms: Optional[int] = None
-        self._number_of_retries: Optional[int] = None
+        self._response_message: ReceivedMessage | None = None
+        self._elapsed_ms: int | None = None
+        self._number_of_retries: int | None = None
 
         self._is_running = False
         self._communications_thread_started_event = threading.Event()
-        self._communications_thread: Optional[threading.Thread] = None
+        self._communications_thread: threading.Thread | None = None
 
     def start(self) -> None:
         """Starts the threaded master instance.
@@ -131,10 +130,10 @@ class ThreadedMaster(Master):
 
         self._logger.info("Stopping master...")
         self._is_running = False
-        
+
         # Unblock any waiting request thread to allow it to exit if we're stopping while a request is in-flight
         self._response_event.set()
-        
+
         try:
             self.close()
         except Exception:
@@ -142,10 +141,10 @@ class ThreadedMaster(Master):
 
         if threading.current_thread() is not self._communications_thread:
             self._communications_thread.join(timeout=5.0)  # Wait for the thread to finish
-        
+
         if self._communications_thread.is_alive():
             self._logger.error("Communications thread did not exit cleanly!")
-        
+
         self._communications_thread = None
         self._logger.info("Master stopped.")
 
@@ -202,7 +201,9 @@ class ThreadedMaster(Master):
                 # This indicates a timeout handled by _handle_max_retries_exceeded
                 response = Response(
                     success=False,
-                    failure_reason=f"No response received from address {address} after {self._number_of_retries} retries.",
+                    failure_reason=(
+                        f"No response received from address {address} after {self._number_of_retries} retries."
+                    ),
                     retry_count=self._number_of_retries,
                 )
                 self._logger.error(response.failure_reason)
@@ -242,7 +243,7 @@ class ThreadedMaster(Master):
             self._is_running = False
             self._logger.info("Background communication loop stopped")
 
-    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Handles a valid response received by the background thread.
 
         This method stores the received message and its metadata, then sets the

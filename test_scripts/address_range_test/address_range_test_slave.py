@@ -29,9 +29,9 @@ import serial
 # This allows the script to import from the `src` and `common` directories.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import Slave
-from src.simple485_remastered import ReceivedMessage
 from mephew_python_commons import LoggerFactory
+
+from src.simple485_remastered import ReceivedMessage, Slave
 
 logger_factory = LoggerFactory(log_files_prefix="address_range_test_slave")
 
@@ -114,7 +114,7 @@ class AddrTestSlave(Slave):
             self._on_ping_registered()
             return
 
-        message.respond("pong".encode("utf-8"))
+        message.respond(b"pong")
         logger.info(f"Received ping, sent pong to {message.src_address}")
 
         self._on_ping_registered()

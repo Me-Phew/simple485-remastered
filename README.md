@@ -75,7 +75,8 @@ These are unit and integration tests designed for a hardware-free environment. T
 - **To Run:** From the project root, execute:
 
   ```bash
-  pytest
+  uv sync --group dev
+  uv run pytest
   ```
 
 - **Details:** See `[tests/README.md](./tests/README.md)` for more information on the test design and philosophy.

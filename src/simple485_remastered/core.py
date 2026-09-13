@@ -2,27 +2,25 @@
 
 import logging
 import time
-from typing import Optional, List
 
 import serial
 
-from .models import ReceivingMessage, ReceivedMessage
+from .models import ReceivedMessage, ReceivingMessage
 from .protocol import (
-    MAX_MESSAGE_LEN,
-    LINE_READY_TIME_MS,
+    BITS_PER_BYTE,
+    BROADCAST_ADDRESS,
+    FIRST_NODE_ADDRESS,
     INTER_BYTE_TIMEOUT_MS,
+    LAST_NODE_ADDRESS,
+    LINE_READY_TIME_MS,
     LONG_MESSAGE_RESPONSE_DELAY_MS,
     LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD,
-    BROADCAST_ADDRESS,
-    ReceiverState,
+    MAX_MESSAGE_LEN,
     ControlSequence,
-    FIRST_NODE_ADDRESS,
-    LAST_NODE_ADDRESS,
-    BITS_PER_BYTE,
+    ReceiverState,
+    is_valid_node_address,
 )
-from .protocol import is_valid_node_address
-from .utils import get_milliseconds, microseconds_to_seconds
-from .utils import logger_factory
+from .utils import get_milliseconds, logger_factory, microseconds_to_seconds
 
 #: Default time (s) to wait for the RS485 transceiver to switch between modes.
 DEFAULT_TRANSCEIVER_TOGGLE_TIME_S = microseconds_to_seconds(100)
@@ -57,8 +55,8 @@ class Simple485Remastered:
         *,
         interface: serial.Serial,
         address: int,
-        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
-        transmit_mode_pin: Optional[int] = None,
+        transceiver_toggle_time_s: float | None = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transmit_mode_pin: int | None = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
         log_level: int = logging.INFO,
@@ -120,9 +118,9 @@ class Simple485Remastered:
         self._last_bus_activity = get_milliseconds()
         self._receiver_state: ReceiverState = ReceiverState.IDLE
         self._receiving_message: ReceivingMessage | None = None
-        self._received_messages: List[ReceivedMessage] = []
+        self._received_messages: list[ReceivedMessage] = []
         self._next_response_delay_ms: int = LINE_READY_TIME_MS
-        self._output_messages: List[tuple[bytes, int]] = []
+        self._output_messages: list[tuple[bytes, int]] = []
 
         self._is_open: bool = False
 
@@ -392,7 +390,8 @@ class Simple485Remastered:
                     self._logger.warning(
                         f"Received invalid message length of: {self._receiving_message.length}. Dropping."
                     )
-                    self._receiver_state = ReceiverState.IDLE # Here we must reset to IDLE because we don't know how to read the rest of the message
+                    # Reset to IDLE because we don't know how to read the rest of the message.
+                    self._receiver_state = ReceiverState.IDLE
                     self._receiving_message = None
                 else:
                     self._receiver_state = ReceiverState.MESSAGE_LEN_RECEIVED
@@ -409,7 +408,8 @@ class Simple485Remastered:
                     self._receiver_state = ReceiverState.STX_RECEIVED
                 else:
                     self._logger.warning("Expected STX, but got other data. Dropping.")
-                    self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the state is already corrupted
+                    # Reset to IDLE because the receive state is already corrupted.
+                    self._receiver_state = ReceiverState.IDLE
                     self._receiving_message = None
 
             case ReceiverState.STX_RECEIVED:
@@ -439,13 +439,15 @@ class Simple485Remastered:
                         self._receiver_state = ReceiverState.ETX_RECEIVED
                     else:
                         self._logger.warning("ETX received but payload length is incorrect. Dropping.")
-                        self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the message itself is corrupted
+                        # Reset to IDLE because the message itself is corrupted.
+                        self._receiver_state = ReceiverState.IDLE
                         self._receiving_message = None
                     return
 
                 # If we get here, the byte is invalid.
                 self._logger.warning("Invalid data byte. Dropping.")
-                self._receiver_state = ReceiverState.IDLE # Here resetting to IDLE is the best option because the message itself is corrupted
+                # Reset to IDLE because the message itself is corrupted.
+                self._receiver_state = ReceiverState.IDLE
                 self._receiving_message = None
 
             case ReceiverState.ETX_RECEIVED:
@@ -453,18 +455,19 @@ class Simple485Remastered:
                 if byte[0] == self._receiving_message.crc:
                     self._receiver_state = ReceiverState.CRC_OK
                 else:
-                    self._logger.warning("CRC mismatch. Dropping.") # Here resetting to IDLE is the best option because the message itself is corrupted
+                    # Reset to IDLE because the message itself is corrupted.
+                    self._logger.warning("CRC mismatch. Dropping.")
                     self._receiver_state = ReceiverState.IDLE
                     self._receiving_message = None
 
             case ReceiverState.CRC_OK:
                 # Expecting End of Transmission (EOT).
-                if byte == ControlSequence.EOT:                    
+                if byte == ControlSequence.EOT:
                     is_for_us = (
                         self._receiving_message.dst_address == self._address
                         or self._receiving_message.dst_address == BROADCAST_ADDRESS
                     )
-                    
+
                     if is_for_us:
                         if self._receiving_message.length is not None and (
                             self._receiving_message.length > LONG_MESSAGE_RESPONSE_DELAY_THRESHOLD

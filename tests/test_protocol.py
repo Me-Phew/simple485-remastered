@@ -9,10 +9,10 @@ edge cases, and invalid cases.
 import pytest
 
 from src.simple485_remastered.protocol import (
+    LAST_NODE_ADDRESS,
+    MASTER_ADDRESS,
     is_valid_node_address,
     is_valid_slave_address,
-    MASTER_ADDRESS,
-    LAST_NODE_ADDRESS,
 )
 
 

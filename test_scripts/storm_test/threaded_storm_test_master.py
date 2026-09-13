@@ -36,7 +36,7 @@ from mephew_python_commons import LoggerFactory
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import ThreadedMaster, RequestException, Response
+from src.simple485_remastered import RequestException, Response, ThreadedMaster
 
 logger_factory = LoggerFactory(log_files_prefix="threaded_storm_test_master")
 
@@ -147,8 +147,7 @@ if __name__ == "__main__":
             current_address += 1
 
         logger.info(
-            f"Tested {current_address - FIRST_ADDRESS} addresses from range "
-            f"{FIRST_ADDRESS} - {current_address - 1}."
+            f"Tested {current_address - FIRST_ADDRESS} addresses from range {FIRST_ADDRESS} - {current_address - 1}."
         )
     logger.info("--- Storm Test Complete ---")
 

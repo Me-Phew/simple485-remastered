@@ -6,9 +6,8 @@ and its interaction with its background I/O thread.
 
 import pytest
 
-from src.simple485_remastered import MaxRetriesExceededException
-from src.simple485_remastered import ThreadedMaster
-from tests.test_master_slave import EchoSlave, SLAVE_ADDRESS  # Reuse our EchoSlave
+from src.simple485_remastered import MaxRetriesExceededException, ThreadedMaster
+from tests.test_master_slave import SLAVE_ADDRESS, EchoSlave  # Reuse our EchoSlave
 
 
 @pytest.fixture

@@ -14,17 +14,15 @@ Usage:
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 import serial
 
 # Add the project's root directory (`simple485`) to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import ThreadedMaster
-from src.simple485_remastered import Response
-from src.simple485_remastered import RequestException
 from mephew_python_commons import LoggerFactory
+
+from src.simple485_remastered import RequestException, Response, ThreadedMaster
 
 logger_factory = LoggerFactory(log_files_prefix="threaded_address_range_test_master")
 
@@ -46,7 +44,7 @@ class ThreadedAddressRangeTestMaster(ThreadedMaster):
     def __init__(
         self,
         interface: serial.Serial,
-        transmit_mode_pin: Optional[int] = None,
+        transmit_mode_pin: int | None = None,
         request_timeout_ms: int = 1000,
         max_request_retries: int = 3,
         raise_on_response_error: bool = True,
@@ -77,7 +75,7 @@ class ThreadedAddressRangeTestMaster(ThreadedMaster):
             RequestException: If the request times out, or if a response is
                 received but its payload is not "pong".
         """
-        response = self.send_request(address, "ping".encode("utf-8"))
+        response = self.send_request(address, b"ping")
 
         # The base method considers any valid reply a success. We add our own
         # application-level check on the payload.
@@ -130,8 +128,7 @@ if __name__ == "__main__":
             current_address += 1
 
         logger.info(
-            f"Tested {current_address - FIRST_ADDRESS} addresses from range "
-            f"{FIRST_ADDRESS} - {current_address - 1}."
+            f"Tested {current_address - FIRST_ADDRESS} addresses from range {FIRST_ADDRESS} - {current_address - 1}."
         )
         current_address = FIRST_ADDRESS  # Reset for next iteration
     logger.info("--- Test Complete ---")

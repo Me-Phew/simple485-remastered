@@ -34,8 +34,7 @@ from mephew_python_commons import LoggerFactory
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import Slave
-from src.simple485_remastered import ReceivedMessage
+from src.simple485_remastered import ReceivedMessage, Slave
 
 logger_factory = LoggerFactory(log_files_prefix="storm_test_slave")
 

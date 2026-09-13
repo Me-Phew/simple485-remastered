@@ -2,7 +2,6 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import serial
 
@@ -43,8 +42,8 @@ class Master(Node, ABC):
         self,
         *,
         interface: serial.Serial,
-        transceiver_toggle_time_s: Optional[float] = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
-        transmit_mode_pin: Optional[int] = None,
+        transceiver_toggle_time_s: float | None = DEFAULT_TRANSCEIVER_TOGGLE_TIME_S,
+        transmit_mode_pin: int | None = None,
         use_rts_for_transmit_mode: bool = False,
         tx_active_high: bool = True,
         request_timeout_ms: int = DEFAULT_RESPONSE_TIMEOUT_MS,
@@ -90,7 +89,7 @@ class Master(Node, ABC):
         self._max_request_retries = max_request_retries
 
         self._current_transaction_id = 0
-        self._active_request: Optional[Request] = None
+        self._active_request: Request | None = None
 
     def get_request_timeout(self) -> int:
         """Returns the current default request timeout in milliseconds."""
@@ -115,7 +114,7 @@ class Master(Node, ABC):
         self._current_transaction_id = (self._current_transaction_id % 255) + 1
         return self._current_transaction_id
 
-    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_incoming_message(self, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Processes an incoming message, matching it against the active request.
 
         This method validates that the incoming message is a valid response to
@@ -155,7 +154,7 @@ class Master(Node, ABC):
         self._handle_response(active_request_temp, message, elapsed_ms)
 
     @abstractmethod
-    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Handles a valid response received from a slave.
 
         This is an abstract method that must be implemented by a subclass. It is
@@ -227,7 +226,9 @@ class Master(Node, ABC):
         """
         return self._active_request is not None
 
-    def _send_request(self, dst_address: int, payload: bytes, timeout: int = None, max_retries: int = None) -> None:
+    def _send_request(
+        self, dst_address: int, payload: bytes, timeout: int | None = None, max_retries: int | None = None
+    ) -> None:
         """Sends a request to a slave and tracks it as the active request.
 
         Args:

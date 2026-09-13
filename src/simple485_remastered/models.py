@@ -6,7 +6,7 @@ received message, to an outgoing request and its eventual response.
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .protocol import BROADCAST_ADDRESS
 from .utils import get_milliseconds
@@ -38,13 +38,13 @@ class ReceivingMessage:
         payload_buffer (bytes): The buffer for the decoded payload bytes
     """
 
-    timestamp: Optional[int] = None
-    last_byte_timestamp: Optional[int] = None
-    dst_address: Optional[int] = None
-    src_address: Optional[int] = None
-    transaction_id: Optional[int] = None
-    length: Optional[int] = None
-    crc: Optional[int] = None
+    timestamp: int | None = None
+    last_byte_timestamp: int | None = None
+    dst_address: int | None = None
+    src_address: int | None = None
+    transaction_id: int | None = None
+    length: int | None = None
+    crc: int | None = None
 
     is_first_nibble: bool = True
     incoming: int = 0
@@ -209,8 +209,8 @@ class Response:
     """
 
     success: bool
-    failure_reason: Optional[str] = None
-    rtt: Optional[int] = None
-    retry_count: Optional[int] = None
-    length: Optional[int] = None
-    payload: Optional[bytes] = None
+    failure_reason: str | None = None
+    rtt: int | None = None
+    retry_count: int | None = None
+    length: int | None = None
+    payload: bytes | None = None

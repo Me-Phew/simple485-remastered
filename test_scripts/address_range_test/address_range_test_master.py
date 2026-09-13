@@ -22,7 +22,6 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 import serial
 
@@ -30,9 +29,9 @@ import serial
 # This allows the script to import from the `src` and `common` directories.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import Master, Request
-from src.simple485_remastered import ReceivedMessage
 from mephew_python_commons import LoggerFactory
+
+from src.simple485_remastered import Master, ReceivedMessage, Request
 
 logger_factory = LoggerFactory(log_files_prefix="address_range_test_master")
 
@@ -84,7 +83,7 @@ class AddrTestMaster(Master):
                 logger.info(f"Pinging address: {self._current_address}")
 
                 # Send the ping request. The base Master class will handle retries.
-                self._send_request(self._current_address, "ping".encode("utf-8"))
+                self._send_request(self._current_address, b"ping")
 
                 # Wait for the response or timeout to be handled by the callback methods.
                 # The callback will set `_pong_received` to True to break this loop.
@@ -99,7 +98,7 @@ class AddrTestMaster(Master):
             self._current_address = FIRST_ADDRESS  # Reset for next iteration
         logger.info("--- Test Complete ---")
 
-    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Handles a valid "pong" response from a Slave.
 
         '_Loop' calls this when a response is successfully received.

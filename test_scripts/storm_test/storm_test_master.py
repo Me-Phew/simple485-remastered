@@ -33,7 +33,6 @@ import string
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 import serial
 from mephew_python_commons import LoggerFactory
@@ -41,8 +40,7 @@ from mephew_python_commons import LoggerFactory
 # Add the project's root directory to the Python path.
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from src.simple485_remastered import Master, Request
-from src.simple485_remastered import ReceivedMessage
+from src.simple485_remastered import Master, ReceivedMessage, Request
 
 logger_factory = LoggerFactory(log_files_prefix="storm_test_master")
 
@@ -109,7 +107,7 @@ class StormTestMaster(Master):
             self._current_address = FIRST_ADDRESS  # Reset for next iteration
         logger.info("--- Storm Test Complete ---")
 
-    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: Optional[int] = None) -> None:
+    def _handle_response(self, request: Request, message: ReceivedMessage, elapsed_ms: int | None = None) -> None:
         """Validates the echoed response from the slave.
 
         This method performs a strict, two-part check:
