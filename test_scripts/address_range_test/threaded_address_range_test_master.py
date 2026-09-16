@@ -103,7 +103,8 @@ if __name__ == "__main__":
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS,
         timeout=1,
-        write_timeout=1,
+        # Must exceed max stuffed-frame TX at 9600 (~0.55 s). 0.1 s times out large payloads.
+        write_timeout=1.0,
     )
 
     # 2. Instantiate the threaded master.

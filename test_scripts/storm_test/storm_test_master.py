@@ -69,7 +69,8 @@ class StormTestMaster(Master):
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
             timeout=1,
-            write_timeout=1,
+            # Must exceed max stuffed-frame TX at 9600 (~0.55 s). 0.1 s times out large payloads.
+            write_timeout=1.0,
         )
         super().__init__(interface=serial_port)
         self._current_address = FIRST_ADDRESS
