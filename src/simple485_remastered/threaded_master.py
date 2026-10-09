@@ -148,7 +148,9 @@ class ThreadedMaster(Master):
         self._communications_thread = None
         self._logger.info("Master stopped.")
 
-    def send_request(self, address: int, payload: bytes) -> Response:
+    def send_request(
+        self, address: int, payload: bytes, *, timeout_ms: int | None = None, max_retries: int | None = None
+    ) -> Response:
         """Sends a request and blocks until a response is received or the request times out.
 
         This method is thread-safe and is the primary way for application code
@@ -161,6 +163,10 @@ class ThreadedMaster(Master):
         Args:
             address (int): The destination slave address
             payload (bytes): The data payload to send
+            timeout_ms (int, optional): Response timeout for this request.
+                The master's default is used when omitted.
+            max_retries (int, optional): Extra attempts after the first.
+                The master's default is used when omitted.
 
         Returns:
             Response: A `Response` object detailing the outcome of the request.
@@ -182,11 +188,15 @@ class ThreadedMaster(Master):
             self._response_event.clear()
             self._response_message = None
 
-            self._send_request(address, payload)
+            effective_timeout_ms = timeout_ms if timeout_ms is not None else self._request_timeout_ms
+            effective_max_retries = max_retries if max_retries is not None else self._max_request_retries
+            self._send_request(
+                address, payload, timeout=effective_timeout_ms, max_retries=effective_max_retries
+            )
             self._logger.info(f"Sent request to address {address}, waiting for response...")
 
             # Calculate a generous maximum wait time for the event
-            all_retries_timeout_ms = self._request_timeout_ms * (self._max_request_retries + 1)
+            all_retries_timeout_ms = effective_timeout_ms * (effective_max_retries + 1)
             max_wait_seconds = (all_retries_timeout_ms / 1000) + 0.5  # Add a small buffer
 
             event_was_set = self._response_event.wait(max_wait_seconds)

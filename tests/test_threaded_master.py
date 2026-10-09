@@ -76,3 +76,21 @@ def test_threaded_master_no_raise_on_error(threaded_master_no_exceptions):
     assert response.success is False
     assert response.payload is None
     assert "No response received" in response.failure_reason
+
+
+def test_send_request_uses_the_per_call_retry_budget(threaded_master):
+    """A health probe can ask for one short attempt without changing the master's default."""
+    seen: dict[str, int | None] = {}
+    original = threaded_master._send_request
+
+    def capture(dst_address, payload, timeout=None, max_retries=None):
+        seen["timeout"] = timeout
+        seen["max_retries"] = max_retries
+        return original(dst_address, payload, timeout=timeout, max_retries=max_retries)
+
+    threaded_master._send_request = capture
+    with pytest.raises(MaxRetriesExceededException) as exc_info:
+        threaded_master.send_request(SLAVE_ADDRESS, b"probe", timeout_ms=10, max_retries=0)
+
+    assert seen == {"timeout": 10, "max_retries": 0}
+    assert exc_info.value.response.retry_count == 0
